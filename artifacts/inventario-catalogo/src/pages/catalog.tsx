@@ -190,7 +190,7 @@ function ProductDialog({
 
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-[hsl(var(--foreground)/.36)] p-0 sm:items-center sm:p-5" role="presentation">
-      <div className="w-full max-w-xl overflow-hidden rounded-t-2xl border border-card-border bg-card shadow-2xl sm:rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="product-dialog-title">
+      <div className="max-h-[100dvh] w-full max-w-xl overflow-y-auto rounded-t-2xl border border-card-border bg-card shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="product-dialog-title">
         <div className="flex items-start justify-between border-b border-card-border px-5 py-4 sm:px-7">
           <div>
             <p className="font-mono-data text-[10px] uppercase tracking-[.18em] text-muted-foreground">
@@ -241,9 +241,9 @@ function ProductDialog({
               <button type="button" onClick={addSubcategory} className="button-secondary h-8 px-3 text-xs" data-testid="button-add-subcategory"><Plus size={14} /> Agregar</button>
             </div>
             {form.subcategories.length > 0 && <div className="mt-3 space-y-2">
-              {form.subcategories.map((item, index) => <div key={index} className="flex items-center gap-2">
-                <input value={item.name} onChange={(event) => updateSubcategory(index, 'name', event.target.value)} className="field h-9 text-sm" placeholder="Tipo: Talla" aria-label={`Tipo de subcategoría ${index + 1}`} data-testid={`input-subcategory-name-${index}`} />
-                <input value={item.value} onChange={(event) => updateSubcategory(index, 'value', event.target.value)} className="field h-9 text-sm" placeholder="Valor: Mediana" aria-label={`Valor de subcategoría ${index + 1}`} data-testid={`input-subcategory-value-${index}`} />
+              {form.subcategories.map((item, index) => <div key={index} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-2">
+                <input value={item.name} onChange={(event) => updateSubcategory(index, 'name', event.target.value)} className="field h-9 min-w-0 text-sm" placeholder="Tipo: Talla" aria-label={`Tipo de subcategoría ${index + 1}`} data-testid={`input-subcategory-name-${index}`} />
+                <input value={item.value} onChange={(event) => updateSubcategory(index, 'value', event.target.value)} className="field h-9 min-w-0 text-sm" placeholder="Valor: Mediana" aria-label={`Valor de subcategoría ${index + 1}`} data-testid={`input-subcategory-value-${index}`} />
                 <button type="button" onClick={() => removeSubcategory(index)} className="icon-button shrink-0 text-destructive" aria-label={`Quitar subcategoría ${index + 1}`} data-testid={`button-remove-subcategory-${index}`}><X size={15} /></button>
               </div>)}
             </div>}
@@ -522,9 +522,9 @@ export default function Catalog() {
             <div className="flex items-center gap-3">
               <button type="button" onClick={() => setMobileMenu((open) => !open)} data-testid="button-toggle-mobile-menu" className="icon-button md:hidden" aria-label="Abrir menú"><Menu size={19} /></button>
               <div className="hidden h-6 w-px bg-border sm:block" />
-              <div><p className="font-mono-data text-[9px] uppercase tracking-[.18em] text-muted-foreground">Miércoles, 12 de junio</p><h1 className="font-display mt-0.5 text-[19px] font-bold tracking-tight">Inventario</h1></div>
+              <div className="min-w-0"><p className="truncate font-mono-data text-[9px] uppercase tracking-[.18em] text-muted-foreground">Miércoles, 12 de junio</p><h1 className="font-display mt-0.5 text-[19px] font-bold tracking-tight">Inventario</h1></div>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
               <button type="button" onClick={refresh} disabled={productsLoading || summaryLoading} data-testid="button-refresh-catalog" className="icon-button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><RefreshCw size={16} className={productsLoading || summaryLoading ? 'animate-spin' : ''} /></button>
               <button type="button" onClick={openNew} data-testid="button-new-product-header" className="button-primary h-9 px-3 text-xs sm:px-4"><Plus size={15} /> <span className="hidden sm:inline">Nuevo producto</span><span className="sm:hidden">Nuevo</span></button>
             </div>
@@ -543,7 +543,7 @@ export default function Catalog() {
             {queryError && <div className="mt-5 flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-error"><span>No pudimos cargar todo el catálogo. Revisa tu conexión e inténtalo otra vez.</span><button type="button" onClick={refresh} data-testid="button-retry-catalog" className="button-secondary h-8 shrink-0 border-[hsl(var(--destructive)/.25)] px-3 text-xs text-destructive">Reintentar</button></div>}
             {(createProduct.error || updateProduct.error || deleteProduct.error) && <div className="mt-5 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-mutation-error">{errorText(createProduct.error || updateProduct.error || deleteProduct.error)}</div>}
 
-            <section className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <section className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {summaryLoading ? [1, 2, 3, 4].map((item) => <div key={item} className="h-[164px] animate-pulse rounded-xl border border-card-border bg-card/70" data-testid={`skeleton-summary-${item}`} />) : <>
                 <SummaryCard label="Productos" value={number.format(derivedSummary.totalProducts)} detail={`${derivedSummary.categories} categorías activas`} icon={<Boxes size={18} />} accent="green" />
                 <SummaryCard label="Unidades" value={number.format(derivedSummary.totalUnits)} detail="piezas en existencia" icon={<Layers3 size={18} />} accent="lime" />

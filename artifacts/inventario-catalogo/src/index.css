@@ -3,6 +3,11 @@
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
