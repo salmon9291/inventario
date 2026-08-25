@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: products
+    description: Product catalog operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,101 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products
+      parameters:
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Create a product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+  /products/{id}:
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProductUpdate"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Product not found
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Product deleted
+        "404":
+          description: Product not found
+  /products/summary:
+    get:
+      operationId: getProductSummary
+      tags: [products]
+      summary: Get catalog summary
+      responses:
+        "200":
+          description: Catalog summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProductSummary"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +130,87 @@ components:
           type: string
       required:
         - status
+    Product:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        sku:
+          type: string
+        category:
+          type: string
+        costPrice:
+          type: number
+        salePrice:
+          type: number
+        stock:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, sku, category, costPrice, salePrice, stock, createdAt, updatedAt]
+    ProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        sku:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        costPrice:
+          type: number
+          minimum: 0
+        salePrice:
+          type: number
+          minimum: 0
+        stock:
+          type: number
+          minimum: 0
+      required: [name, sku, category, costPrice, salePrice, stock]
+    ProductUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        sku:
+          type: string
+          minLength: 1
+        category:
+          type: string
+          minLength: 1
+        costPrice:
+          type: number
+          minimum: 0
+        salePrice:
+          type: number
+          minimum: 0
+        stock:
+          type: number
+          minimum: 0
+    ProductSummary:
+      type: object
+      properties:
+        totalProducts:
+          type: number
+        totalUnits:
+          type: number
+        inventoryValue:
+          type: number
+        projectedProfit:
+          type: number
+        lowStockCount:
+          type: number
+        categories:
+          type: number
+      required: [totalProducts, totalUnits, inventoryValue, projectedProfit, lowStockCount, categories]
 

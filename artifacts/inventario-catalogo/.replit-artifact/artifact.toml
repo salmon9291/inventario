@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Catálogo de Inventario"
+description = "Aplicación web para administrar un catálogo de productos con SKU/código de barras, categorías, costos, precios de venta, existencias y cálculo de ganancias."
+version = "1.0.0"
+id = "artifacts/inventario-catalogo"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19670
+
+[services.development]
+run = "pnpm --filter @workspace/inventario-catalogo run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/inventario-catalogo", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/inventario-catalogo/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19670"
+BASE_PATH = "/"

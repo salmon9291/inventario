@@ -1,0 +1,1 @@
+- [API Zod integer compatibility](api-zod-integer-compatibility.md) — generated integer schemas use an unavailable Zod API; enforce integer semantics at the server boundary.

@@ -1,6 +1,6 @@
-# [Project name]
+# Catálogo de Inventario
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Aplicación web para controlar productos, existencias y rentabilidad de una tienda.
 
 ## Run & Operate
 
@@ -22,15 +22,22 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/inventario-catalogo` — aplicación React/Vite y catálogo principal.
+- `artifacts/api-server/src/routes/products.ts` — endpoints CRUD y resumen del catálogo.
+- `lib/api-spec/openapi.yaml` — contrato fuente de la API.
+- `lib/db/src/schema/products.ts` — tabla y tipos de productos.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- El contrato OpenAPI es la fuente única para generar hooks del cliente y validadores del servidor.
+- Los precios se almacenan como `numeric` con modo numérico para cálculos monetarios en la interfaz.
+- La existencia se mantiene como entero y el resumen calcula valor de inventario y utilidad proyectada en SQL.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Catálogo inicial con alta, edición y eliminación de productos.
+- Búsqueda por nombre/SKU, filtro por categoría y visualización de alertas de bajo stock.
+- Resumen de productos, unidades, valor a costo y utilidad proyectada en MXN.
 
 ## User preferences
 
