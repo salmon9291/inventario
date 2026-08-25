@@ -6,6 +6,7 @@ import {
   Boxes,
   ChevronDown,
   Filter,
+  ImagePlus,
   LayoutDashboard,
   Layers3,
   Menu,
@@ -18,6 +19,7 @@ import {
   Tags,
   Trash2,
   TrendingUp,
+  UploadCloud,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -33,15 +35,24 @@ import {
   type ProductInput,
 } from '@workspace/api-client-react';
 
-type FormValues = ProductInput;
+type FormValues = {
+  name: string;
+  sku: string;
+  category: string;
+  costPrice: number | '';
+  salePrice: number | '';
+  stock: number | '';
+  imageUrl: string | null;
+};
 
 const emptyForm: FormValues = {
   name: '',
   sku: '',
   category: '',
-  costPrice: 0,
-  salePrice: 0,
-  stock: 0,
+  costPrice: '',
+  salePrice: '',
+  stock: '',
+  imageUrl: null,
 };
 
 const currency = new Intl.NumberFormat('es-MX', {
@@ -71,6 +82,14 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function ProductAvatar({ product, size = 'normal' }: { product: Product; size?: 'normal' | 'large' }) {
+  return (
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[hsl(var(--primary)/.1)] font-mono-data font-medium text-primary ${size === 'large' ? 'h-10 w-10 text-[11px]' : 'h-9 w-9 text-[10px]'}`}>
+      {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full object-cover" /> : initials(product.name)}
+    </div>
+  );
+}
+
 function ProductDialog({
   open,
   editing,
@@ -85,9 +104,11 @@ function ProductDialog({
   onSubmit: (values: FormValues) => void;
 }) {
   const [form, setForm] = useState<FormValues>(emptyForm);
+  const [imageError, setImageError] = useState('');
 
   useEffect(() => {
     if (!open) return;
+    setImageError('');
     if (editing) {
       setForm({
         name: editing.name,
@@ -96,6 +117,7 @@ function ProductDialog({
         costPrice: editing.costPrice,
         salePrice: editing.salePrice,
         stock: editing.stock,
+        imageUrl: editing.imageUrl,
       });
     } else {
       setForm(emptyForm);
@@ -109,6 +131,24 @@ function ProductDialog({
       ...current,
       [key]: key === 'name' || key === 'sku' || key === 'category' ? value : Number(value),
     }));
+  };
+
+  const handleImage = (file: File | undefined) => {
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setImageError('Usa una imagen JPG, PNG o WebP.');
+      return;
+    }
+    if (file.size > 1_000_000) {
+      setImageError('La imagen debe pesar menos de 1 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm((current) => ({ ...current, imageUrl: String(reader.result) }));
+      setImageError('');
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -130,7 +170,13 @@ function ProductDialog({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            onSubmit(form);
+            if (form.costPrice === '' || form.salePrice === '' || form.stock === '') return;
+            onSubmit({
+              ...form,
+              costPrice: Number(form.costPrice),
+              salePrice: Number(form.salePrice),
+              stock: Number(form.stock),
+            });
           }}
           className="space-y-5 px-5 py-5 sm:px-7 sm:py-6"
         >
@@ -148,18 +194,37 @@ function ProductDialog({
             <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Categoría</span>
             <input required value={form.category} onChange={(event) => update('category', event.target.value)} data-testid="input-product-category" className="field" placeholder="Papelería" />
           </label>
+          <div className="rounded-xl border border-dashed border-input bg-secondary/25 p-3">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[hsl(var(--primary)/.1)] text-primary">
+                {form.imageUrl ? <img src={form.imageUrl} alt="Vista previa del producto" className="h-full w-full object-cover" /> : <ImagePlus size={21} />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold">Imagen del producto <span className="font-normal text-muted-foreground">(opcional)</span></p>
+                <p className="mt-1 text-xs text-muted-foreground">JPG, PNG o WebP · máximo 1 MB</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <label className="button-secondary h-8 cursor-pointer px-3 text-xs">
+                    <UploadCloud size={14} /> {form.imageUrl ? 'Cambiar imagen' : 'Subir imagen'}
+                    <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(event) => handleImage(event.target.files?.[0])} />
+                  </label>
+                  {form.imageUrl && <button type="button" onClick={() => setForm((current) => ({ ...current, imageUrl: null }))} className="text-xs font-semibold text-destructive">Quitar</button>}
+                </div>
+              </div>
+            </div>
+            {imageError && <p className="mt-2 text-xs font-semibold text-destructive">{imageError}</p>}
+          </div>
           <div className="grid gap-4 sm:grid-cols-3">
             <label className="space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Costo · MXN</span>
-              <input required min="0" step="0.01" type="number" value={form.costPrice} onChange={(event) => update('costPrice', event.target.value)} data-testid="input-product-cost" className="field font-mono-data" />
+              <input required min="0" step="0.01" type="number" value={form.costPrice} onChange={(event) => update('costPrice', event.target.value)} data-testid="input-product-cost" className="field font-mono-data" placeholder="0.00" />
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Venta · MXN</span>
-              <input required min="0" step="0.01" type="number" value={form.salePrice} onChange={(event) => update('salePrice', event.target.value)} data-testid="input-product-sale" className="field font-mono-data" />
+              <input required min="0" step="0.01" type="number" value={form.salePrice} onChange={(event) => update('salePrice', event.target.value)} data-testid="input-product-sale" className="field font-mono-data" placeholder="0.00" />
             </label>
             <label className="space-y-1.5">
               <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Existencia</span>
-              <input required min="0" step="1" type="number" value={form.stock} onChange={(event) => update('stock', event.target.value)} data-testid="input-product-stock" className="field font-mono-data" />
+              <input required min="0" step="1" type="number" value={form.stock} onChange={(event) => update('stock', event.target.value)} data-testid="input-product-stock" className="field font-mono-data" placeholder="0" />
             </label>
           </div>
           <div className="flex flex-col-reverse gap-2 border-t border-card-border pt-4 sm:flex-row sm:justify-end">
@@ -214,7 +279,7 @@ function ProductRow({
   return (
     <div className="group grid grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] items-center gap-3 border-b border-card-border px-4 py-3.5 last:border-0 hover:bg-[hsl(var(--secondary)/.35)] sm:px-5" data-testid={`row-product-${product.id}`}>
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary)/.1)] font-mono-data text-[11px] font-medium text-primary">{initials(product.name)}</div>
+        <ProductAvatar product={product} />
         <div className="min-w-0">
           <p className="truncate text-sm font-bold">{product.name}</p>
           <p className="font-mono-data mt-0.5 text-[10px] uppercase text-muted-foreground">{product.sku}</p>
@@ -247,7 +312,7 @@ function ProductMobileCard({
     <article className="border-b border-card-border p-4 last:border-0" data-testid={`card-product-${product.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[hsl(var(--primary)/.1)] font-mono-data text-[11px] font-medium text-primary">{initials(product.name)}</div>
+          <ProductAvatar product={product} size="large" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{product.name}</p>
             <p className="font-mono-data mt-0.5 text-[10px] uppercase text-muted-foreground">{product.sku} · {product.category}</p>
@@ -320,8 +385,15 @@ export default function Catalog() {
   };
 
   const handleSubmit = (values: FormValues) => {
+    if (values.costPrice === '' || values.salePrice === '' || values.stock === '') return;
+    const payload: ProductInput = {
+      ...values,
+      costPrice: Number(values.costPrice),
+      salePrice: Number(values.salePrice),
+      stock: Number(values.stock),
+    };
     if (editing) {
-      updateProduct.mutate({ id: editing.id, data: values }, {
+      updateProduct.mutate({ id: editing.id, data: payload }, {
         onSuccess: () => {
           invalidateCatalog();
           setDialogOpen(false);
@@ -329,7 +401,7 @@ export default function Catalog() {
         },
       });
     } else {
-      createProduct.mutate({ data: values }, {
+      createProduct.mutate({ data: payload }, {
         onSuccess: () => {
           invalidateCatalog();
           setDialogOpen(false);

@@ -14,6 +14,11 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+const MAX_IMAGE_LENGTH = 1_400_000;
+
+function hasValidImage(imageUrl: string | null | undefined) {
+  return imageUrl == null || (imageUrl.startsWith("data:image/") && imageUrl.length <= MAX_IMAGE_LENGTH);
+}
 
 router.get("/products", async (req, res): Promise<void> => {
   const parsed = ListProductsQueryParams.safeParse(req.query);
@@ -46,6 +51,10 @@ router.post("/products", async (req, res): Promise<void> => {
     res.status(400).json({ error: "La existencia debe ser un número entero" });
     return;
   }
+  if (!hasValidImage(parsed.data.imageUrl)) {
+    res.status(400).json({ error: "La imagen debe ser JPG, PNG o WebP y pesar menos de 1 MB" });
+    return;
+  }
   try {
     const [product] = await db.insert(productsTable).values(parsed.data).returning();
     res.status(201).json(CreateProductResponse.parse(product));
@@ -71,6 +80,10 @@ router.patch("/products/:id", async (req, res): Promise<void> => {
   }
   if (parsed.data.stock !== undefined && !Number.isInteger(parsed.data.stock)) {
     res.status(400).json({ error: "La existencia debe ser un número entero" });
+    return;
+  }
+  if (!hasValidImage(parsed.data.imageUrl)) {
+    res.status(400).json({ error: "La imagen debe ser JPG, PNG o WebP y pesar menos de 1 MB" });
     return;
   }
   const [product] = await db

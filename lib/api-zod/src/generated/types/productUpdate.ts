@@ -19,4 +19,6 @@ export interface ProductUpdate {
   salePrice?: number;
   /** @minimum 0 */
   stock?: number;
+  /** @nullable */
+  imageUrl?: string | null;
 }

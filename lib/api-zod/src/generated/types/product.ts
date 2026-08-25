@@ -14,6 +14,8 @@ export interface Product {
   costPrice: number;
   salePrice: number;
   stock: number;
+  /** @nullable */
+  imageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

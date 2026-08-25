@@ -147,13 +147,15 @@ components:
           type: number
         stock:
           type: number
+        imageUrl:
+          type: ["string", "null"]
         createdAt:
           type: string
           format: date-time
         updatedAt:
           type: string
           format: date-time
-      required: [id, name, sku, category, costPrice, salePrice, stock, createdAt, updatedAt]
+      required: [id, name, sku, category, costPrice, salePrice, stock, imageUrl, createdAt, updatedAt]
     ProductInput:
       type: object
       properties:
@@ -175,7 +177,9 @@ components:
         stock:
           type: number
           minimum: 0
-      required: [name, sku, category, costPrice, salePrice, stock]
+        imageUrl:
+          type: ["string", "null"]
+      required: [name, sku, category, costPrice, salePrice, stock, imageUrl]
     ProductUpdate:
       type: object
       properties:
@@ -197,6 +201,8 @@ components:
         stock:
           type: number
           minimum: 0
+        imageUrl:
+          type: ["string", "null"]
     ProductSummary:
       type: object
       properties:

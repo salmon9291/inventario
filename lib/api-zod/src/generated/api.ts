@@ -33,6 +33,7 @@ export const ListProductsResponseItem = zod.object({
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),
+  "imageUrl": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -59,7 +60,8 @@ export const CreateProductBody = zod.object({
   "category": zod.string().min(1),
   "costPrice": zod.number().min(createProductBodyCostPriceMin),
   "salePrice": zod.number().min(createProductBodySalePriceMin),
-  "stock": zod.number().min(createProductBodyStockMin)
+  "stock": zod.number().min(createProductBodyStockMin),
+  "imageUrl": zod.string().nullable()
 })
 
 export const CreateProductResponse = zod.object({
@@ -70,6 +72,7 @@ export const CreateProductResponse = zod.object({
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),
+  "imageUrl": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -99,7 +102,8 @@ export const UpdateProductBody = zod.object({
   "category": zod.string().min(1).optional(),
   "costPrice": zod.number().min(updateProductBodyCostPriceMin).optional(),
   "salePrice": zod.number().min(updateProductBodySalePriceMin).optional(),
-  "stock": zod.number().min(updateProductBodyStockMin).optional()
+  "stock": zod.number().min(updateProductBodyStockMin).optional(),
+  "imageUrl": zod.string().nullish()
 })
 
 export const UpdateProductResponse = zod.object({
@@ -110,6 +114,7 @@ export const UpdateProductResponse = zod.object({
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),
+  "imageUrl": zod.string().nullable(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })

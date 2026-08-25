@@ -19,4 +19,6 @@ export interface ProductInput {
   salePrice: number;
   /** @minimum 0 */
   stock: number;
+  /** @nullable */
+  imageUrl: string | null;
 }

@@ -17,6 +17,8 @@ export interface Product {
   costPrice: number;
   salePrice: number;
   stock: number;
+  /** @nullable */
+  imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,6 +36,8 @@ export interface ProductInput {
   salePrice: number;
   /** @minimum 0 */
   stock: number;
+  /** @nullable */
+  imageUrl: string | null;
 }
 
 export interface ProductUpdate {
@@ -49,6 +53,8 @@ export interface ProductUpdate {
   salePrice?: number;
   /** @minimum 0 */
   stock?: number;
+  /** @nullable */
+  imageUrl?: string | null;
 }
 
 export interface ProductSummary {
