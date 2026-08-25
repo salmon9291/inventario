@@ -2,12 +2,10 @@ import { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
-  ArrowUpRight,
   Boxes,
   ChevronDown,
   Filter,
   ImagePlus,
-  LayoutDashboard,
   Layers3,
   Menu,
   Package2,
@@ -308,14 +306,13 @@ function SummaryCard({
   accent?: 'green' | 'coral' | 'lime' | 'blue';
 }) {
   return (
-    <article className="relative overflow-hidden rounded-xl border border-card-border bg-card p-4 shadow-[0_2px_0_hsl(var(--foreground)/.04)] transition-transform duration-200 hover:-translate-y-0.5 sm:p-5">
-      <div className={`mb-5 flex h-9 w-9 items-center justify-center rounded-lg ${accent === 'coral' ? 'bg-[hsl(var(--accent)/.15)] text-accent' : accent === 'lime' ? 'bg-[hsl(var(--chart-3)/.2)] text-primary' : accent === 'blue' ? 'bg-[hsl(var(--chart-5)/.14)] text-[hsl(var(--chart-5))]' : 'bg-[hsl(var(--primary)/.11)] text-primary'}`}>
+    <article className="border-b border-card-border px-1 py-3 sm:border-b-0 sm:border-l sm:px-4 sm:py-1 first:sm:border-l-0">
+      <div className={`mb-3 flex h-7 w-7 items-center justify-center rounded-md ${accent === 'coral' ? 'bg-[hsl(var(--accent)/.12)] text-accent' : accent === 'lime' ? 'bg-[hsl(var(--chart-3)/.14)] text-primary' : accent === 'blue' ? 'bg-[hsl(var(--chart-5)/.12)] text-[hsl(var(--chart-5))]' : 'bg-[hsl(var(--primary)/.1)] text-primary'}`}>
         {icon}
       </div>
       <p className="text-[11px] font-bold uppercase tracking-[.12em] text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-[27px]" data-testid={`text-summary-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{detail}</p>
-      <div className={`absolute -bottom-9 -right-7 h-24 w-24 rounded-full border-[12px] ${accent === 'coral' ? 'border-[hsl(var(--accent)/.08)]' : 'border-[hsl(var(--primary)/.055)]'}`} />
+      <p className="mt-1 font-display text-2xl font-semibold tracking-tight" data-testid={`text-summary-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</p>
+      <p className="mt-1 text-[11px] text-muted-foreground">{detail}</p>
     </article>
   );
 }
@@ -419,6 +416,7 @@ export default function Catalog() {
     });
   }, [allProducts, category, lowOnly, search]);
   const lowProducts = useMemo(() => allProducts.filter((product) => product.stock <= 5).sort((a, b) => a.stock - b.stock).slice(0, 3), [allProducts]);
+  const lowStockCount = useMemo(() => allProducts.filter((product) => product.stock <= 5).length, [allProducts]);
   const pending = createProduct.isPending || updateProduct.isPending || deleteProduct.isPending;
   const queryError = productsError || summaryError;
   const derivedSummary = summary ?? {
@@ -426,7 +424,7 @@ export default function Catalog() {
     totalUnits: allProducts.reduce((total, product) => total + product.stock, 0),
     inventoryValue: allProducts.reduce((total, product) => total + product.costPrice * product.stock, 0),
     projectedProfit: allProducts.reduce((total, product) => total + (product.salePrice - product.costPrice) * product.stock, 0),
-    lowStockCount: lowProducts.length,
+    lowStockCount,
     categories: categories.length - 1,
   };
 
@@ -488,63 +486,59 @@ export default function Catalog() {
   };
 
   return (
-    <div className="noise-overlay min-h-[100dvh] bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[224px] flex-col bg-sidebar text-sidebar-foreground md:flex">
-        <div className="flex h-[82px] items-center border-b border-sidebar-border px-6">
+    <div className="min-h-[100dvh] bg-background">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[208px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+        <div className="flex h-[64px] items-center border-b border-sidebar-border px-5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"><Package2 size={18} strokeWidth={2.5} /></div>
-            <div><p className="font-display text-[17px] font-bold leading-none">Catálogo</p><p className="mt-1 font-mono-data text-[9px] uppercase tracking-[.13em] text-sidebar-foreground/55">de inventario</p></div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Package2 size={16} strokeWidth={2.5} /></div>
+            <div><p className="font-display text-[15px] font-bold leading-none">Catálogo</p><p className="mt-1 font-mono-data text-[9px] uppercase tracking-[.13em] text-sidebar-foreground/55">inventario</p></div>
           </div>
         </div>
-        <div className="flex-1 px-3 py-7">
-          <p className="px-3 text-[9px] font-bold uppercase tracking-[.18em] text-sidebar-foreground/40">Espacio de trabajo</p>
-          <nav className="mt-3 space-y-1">
-            <button type="button" data-testid="nav-inventory" className="flex w-full items-center gap-3 rounded-lg bg-sidebar-accent px-3 py-2.5 text-left text-sm font-semibold text-sidebar-accent-foreground"><LayoutDashboard size={16} /> Inventario <span className="ml-auto rounded bg-sidebar-primary/15 px-1.5 py-0.5 font-mono-data text-[10px] text-sidebar-primary">{derivedSummary.totalProducts}</span></button>
-            <button type="button" data-testid="nav-categories" onClick={() => { setCategory('Todas'); setLowOnly(false); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-sidebar-foreground/65 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Tags size={16} /> Categorías <span className="ml-auto font-mono-data text-[10px]">{derivedSummary.categories}</span></button>
+        <div className="flex-1 px-3 py-5">
+          <nav className="space-y-1">
+            <button type="button" data-testid="nav-inventory" className="flex w-full items-center gap-3 rounded-md bg-sidebar-accent px-3 py-2.5 text-left text-sm font-semibold text-sidebar-accent-foreground"><Package2 size={16} /> Inventario <span className="ml-auto rounded bg-sidebar-primary/15 px-1.5 py-0.5 font-mono-data text-[10px] text-sidebar-primary">{derivedSummary.totalProducts}</span></button>
+            <button type="button" data-testid="nav-categories" onClick={() => { setCategory('Todas'); setLowOnly(false); }} className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-sm text-sidebar-foreground/65 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Tags size={15} /> Categorías <span className="ml-auto font-mono-data text-[10px]">{derivedSummary.categories}</span></button>
           </nav>
-          <p className="mt-9 px-3 text-[9px] font-bold uppercase tracking-[.18em] text-sidebar-foreground/40">Atajos</p>
-          <div className="mt-3 space-y-1">
-            <button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-clear-filters-sidebar" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-sidebar-foreground/65 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><SlidersHorizontal size={16} /> Limpiar filtros</button>
-            <button type="button" onClick={openNew} data-testid="button-sidebar-new-product" className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-sidebar-foreground/65 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Plus size={16} /> Nuevo producto</button>
+          <div className="mt-5 border-t border-sidebar-border pt-4">
+            <button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-clear-filters-sidebar" className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><SlidersHorizontal size={14} /> Limpiar filtros</button>
+            <button type="button" onClick={openNew} data-testid="button-sidebar-new-product" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Plus size={14} /> Nuevo producto</button>
           </div>
         </div>
-        <div className="border-t border-sidebar-border p-5">
+        <div className="border-t border-sidebar-border p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary font-mono-data text-[11px] font-bold text-sidebar-primary-foreground">CM</div>
-            <div><p className="text-xs font-semibold">Casa Mercado</p><p className="mt-0.5 text-[10px] text-sidebar-foreground/45">Equipo de tienda</p></div>
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-sidebar-primary font-mono-data text-[10px] font-bold text-sidebar-primary-foreground">CM</div>
+            <div><p className="text-xs font-semibold">Casa Mercado</p><p className="mt-0.5 text-[10px] text-sidebar-foreground/45">Tienda</p></div>
           </div>
         </div>
       </aside>
 
-      <div className="md:pl-[224px]">
-        <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
-          <div className="flex h-[68px] items-center justify-between px-4 sm:px-7 lg:px-10">
+      <div className="md:pl-[208px]">
+        <header className="sticky top-0 z-20 border-b border-border bg-background">
+          <div className="flex h-[60px] items-center justify-between px-4 sm:px-7 lg:px-9">
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => setMobileMenu((open) => !open)} data-testid="button-toggle-mobile-menu" className="icon-button md:hidden" aria-label="Abrir menú"><Menu size={19} /></button>
-              <div className="hidden h-6 w-px bg-border sm:block" />
-              <div className="min-w-0"><p className="truncate font-mono-data text-[9px] uppercase tracking-[.18em] text-muted-foreground">Miércoles, 12 de junio</p><h1 className="font-display mt-0.5 text-[19px] font-bold tracking-tight">Inventario</h1></div>
+              <button type="button" onClick={() => setMobileMenu((open) => !open)} data-testid="button-toggle-mobile-menu" className="icon-button md:hidden" aria-label="Abrir menú"><Menu size={18} /></button>
+              <h1 className="font-display text-[18px] font-semibold tracking-tight">Inventario</h1>
             </div>
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-              <button type="button" onClick={refresh} disabled={productsLoading || summaryLoading} data-testid="button-refresh-catalog" className="icon-button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><RefreshCw size={16} className={productsLoading || summaryLoading ? 'animate-spin' : ''} /></button>
+              <button type="button" onClick={refresh} disabled={productsLoading || summaryLoading} data-testid="button-refresh-catalog" className="icon-button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><RefreshCw size={15} className={productsLoading || summaryLoading ? 'animate-spin' : ''} /></button>
               <button type="button" onClick={openNew} data-testid="button-new-product-header" className="button-primary h-9 px-3 text-xs sm:px-4"><Plus size={15} /> <span className="hidden sm:inline">Nuevo producto</span><span className="sm:hidden">Nuevo</span></button>
             </div>
           </div>
-          {mobileMenu && <div className="border-t border-border bg-card px-4 py-3 md:hidden"><div className="flex items-center gap-2 text-sm font-semibold text-primary"><LayoutDashboard size={16} /> Inventario <span className="font-mono-data ml-auto text-xs">{derivedSummary.totalProducts} productos</span></div><button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); setMobileMenu(false); }} data-testid="button-mobile-clear-filters" className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><SlidersHorizontal size={14} /> Limpiar filtros</button></div>}
+          {mobileMenu && <div className="border-t border-border bg-card px-4 py-3 md:hidden"><div className="flex items-center gap-2 text-sm font-semibold text-primary"><Package2 size={15} /> Inventario <span className="font-mono-data ml-auto text-xs">{derivedSummary.totalProducts} productos</span></div><button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); setMobileMenu(false); }} data-testid="button-mobile-clear-filters" className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:underline">Limpiar filtros</button></div>}
         </header>
 
-        <main className="paper-grid min-h-[calc(100dvh-68px)] px-4 py-6 sm:px-7 sm:py-8 lg:px-10">
+        <main className="min-h-[calc(100dvh-60px)] px-4 py-6 sm:px-7 sm:py-7 lg:px-9">
           <div className="mx-auto max-w-[1420px]">
-            <section className="animate-rise flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-              <div><div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[.16em] text-primary"><span className="h-1.5 w-1.5 rounded-full bg-accent animate-line" /> Operación diaria</div><h2 className="font-display text-3xl font-bold tracking-[-.045em] sm:text-4xl">Lo que hay, a la vista.</h2><p className="mt-2 max-w-lg text-sm text-muted-foreground">Controla existencias, cuida tu margen y mantén el piso de venta en movimiento.</p></div>
-              <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex"><span className="font-mono-data text-primary">MXN</span> · precios de venta y costo</div>
+            <section className="animate-rise">
+              <div><h2 className="font-display text-2xl font-semibold tracking-[-.035em] sm:text-3xl">Productos</h2><p className="mt-1 text-sm text-muted-foreground">Existencias, precios y margen por producto.</p></div>
             </section>
 
             {notice && <div className="mt-5 flex items-center justify-between rounded-lg border border-[hsl(var(--chart-3)/.5)] bg-[hsl(var(--chart-3)/.13)] px-4 py-3 text-sm text-primary animate-rise" data-testid="status-success"><span>{notice}</span><button type="button" onClick={() => setNotice('')} data-testid="button-dismiss-notice" aria-label="Cerrar aviso"><X size={15} /></button></div>}
             {queryError && <div className="mt-5 flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-error"><span>No pudimos cargar todo el catálogo. Revisa tu conexión e inténtalo otra vez.</span><button type="button" onClick={refresh} data-testid="button-retry-catalog" className="button-secondary h-8 shrink-0 border-[hsl(var(--destructive)/.25)] px-3 text-xs text-destructive">Reintentar</button></div>}
             {(createProduct.error || updateProduct.error || deleteProduct.error) && <div className="mt-5 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-mutation-error">{errorText(createProduct.error || updateProduct.error || deleteProduct.error)}</div>}
 
-            <section className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {summaryLoading ? [1, 2, 3, 4].map((item) => <div key={item} className="h-[164px] animate-pulse rounded-xl border border-card-border bg-card/70" data-testid={`skeleton-summary-${item}`} />) : <>
+            <section className="mt-7 grid grid-cols-2 gap-x-4 border-y border-card-border bg-card px-3 py-3 sm:grid-cols-4 sm:px-0 sm:py-4">
+              {summaryLoading ? [1, 2, 3, 4].map((item) => <div key={item} className="h-[112px] animate-pulse border-l border-card-border bg-card/70 first:border-l-0" data-testid={`skeleton-summary-${item}`} />) : <>
                 <SummaryCard label="Productos" value={number.format(derivedSummary.totalProducts)} detail={`${derivedSummary.categories} categorías activas`} icon={<Boxes size={18} />} accent="green" />
                 <SummaryCard label="Unidades" value={number.format(derivedSummary.totalUnits)} detail="piezas en existencia" icon={<Layers3 size={18} />} accent="lime" />
                 <SummaryCard label="Valor en inventario" value={formatCurrency(derivedSummary.inventoryValue)} detail="a precio de costo" icon={<WalletCards size={18} />} accent="blue" />
@@ -552,19 +546,20 @@ export default function Catalog() {
               </>}
             </section>
 
-            {lowProducts.length > 0 && <section className="mt-5 overflow-hidden rounded-xl border border-[hsl(var(--accent)/.32)] bg-[hsl(var(--accent)/.08)]" data-testid="section-low-stock">
-              <div className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center">
-                <div className="flex items-center gap-2 text-accent"><AlertTriangle size={17} /><span className="text-xs font-bold uppercase tracking-[.1em]">Atención de stock</span><span className="rounded-full bg-accent px-2 py-0.5 font-mono-data text-[10px] font-bold text-accent-foreground">{derivedSummary.lowStockCount}</span></div>
-                <div className="hidden h-5 w-px bg-accent/25 sm:block" />
+            {lowProducts.length > 0 && <section className="mt-5 border-y border-[hsl(var(--accent)/.32)] bg-[hsl(var(--accent)/.06)]" data-testid="section-low-stock">
+              <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
+                <div className="flex items-center gap-2 text-accent"><AlertTriangle size={16} /><span className="text-xs font-bold">Stock bajo</span><span className="font-mono-data text-[11px] font-bold">{derivedSummary.lowStockCount}</span></div>
+                <div className="hidden h-4 w-px bg-accent/25 sm:block" />
                 <div className="flex flex-1 flex-wrap gap-x-5 gap-y-1 text-xs text-foreground/75">
                   {lowProducts.map((product) => <span key={product.id} data-testid={`text-low-stock-${product.id}`}><strong>{product.name}</strong> <span className="font-mono-data text-accent">{product.stock} pzas.</span></span>)}
                 </div>
-                <button type="button" onClick={() => { setLowOnly(true); setSearch(''); setCategory('Todas'); }} data-testid="button-view-low-stock" className="flex items-center gap-1 text-xs font-bold text-accent transition hover:gap-2">Ver alertas <ArrowUpRight size={14} /></button>
-                   </div>
-                   {(lowOnly || search || category !== 'Todas') && <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"><span>Filtros activos:</span>{lowOnly && <button type="button" onClick={() => setLowOnly(false)} data-testid="button-remove-low-stock-filter" className="inline-flex items-center gap-1 rounded-full bg-[hsl(var(--accent)/.14)] px-2.5 py-1 font-semibold text-accent">Stock bajo <X size={11} /></button>}{search && <button type="button" onClick={() => setSearch('')} data-testid="button-remove-search-filter" className="inline-flex max-w-[180px] items-center gap-1 truncate rounded-full bg-secondary px-2.5 py-1 font-semibold text-foreground">“{search}” <X size={11} /></button>}{category !== 'Todas' && <button type="button" onClick={() => setCategory('Todas')} data-testid="button-remove-category-filter" className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 font-semibold text-foreground">{category} <X size={11} /></button>}</div>}
+                <button type="button" onClick={() => { setLowOnly(true); setSearch(''); setCategory('Todas'); }} data-testid="button-view-low-stock" className="text-left text-xs font-semibold text-accent underline-offset-2 hover:underline">Ver productos</button>
+              </div>
             </section>}
 
-            <section className="mt-7 overflow-hidden rounded-xl border border-card-border bg-card shadow-[0_2px_0_hsl(var(--foreground)/.04)]">
+            {(lowOnly || search || category !== 'Todas') && <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"><span>Filtros:</span>{lowOnly && <button type="button" onClick={() => setLowOnly(false)} data-testid="button-remove-low-stock-filter" className="inline-flex items-center gap-1 border border-[hsl(var(--accent)/.28)] bg-[hsl(var(--accent)/.08)] px-2 py-1 font-semibold text-accent">Stock bajo <X size={11} /></button>}{search && <button type="button" onClick={() => setSearch('')} data-testid="button-remove-search-filter" className="inline-flex max-w-[180px] items-center gap-1 truncate border border-border bg-card px-2 py-1 font-semibold text-foreground">“{search}” <X size={11} /></button>}{category !== 'Todas' && <button type="button" onClick={() => setCategory('Todas')} data-testid="button-remove-category-filter" className="inline-flex items-center gap-1 border border-border bg-card px-2 py-1 font-semibold text-foreground">{category} <X size={11} /></button>}</div>}
+
+            <section className="mt-6 overflow-hidden border border-card-border bg-card">
               <div className="border-b border-card-border px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div><h3 className="font-display text-lg font-bold tracking-tight">Todos los productos</h3><p className="mt-0.5 text-xs text-muted-foreground">{visibleProducts.length} de {allProducts.length} registros visibles</p></div>
@@ -580,7 +575,7 @@ export default function Catalog() {
               </>}
               {visibleProducts.length > 0 && <div className="flex items-center justify-between border-t border-card-border bg-secondary/25 px-4 py-3 text-[10px] text-muted-foreground sm:px-5"><span>Margen unitario = precio de venta − costo</span><span className="font-mono-data">{visibleProducts.length} registros</span></div>}
             </section>
-            <footer className="flex flex-col gap-2 py-7 text-[10px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between"><span>Catálogo de Inventario <span className="mx-1 text-border">/</span> Casa Mercado</span><span className="font-mono-data uppercase tracking-[.1em]">Datos actualizados en tiempo real</span></footer>
+             <footer className="py-6 text-[10px] text-muted-foreground"><span>Catálogo de Inventario <span className="mx-1 text-border">/</span> Casa Mercado</span></footer>
           </div>
         </main>
       </div>

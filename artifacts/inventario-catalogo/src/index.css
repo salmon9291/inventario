@@ -72,7 +72,7 @@ body {
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* LIGHT MODE — azul editorial, blanco limpio y negro carbón */
+/* LIGHT MODE — neutral de trabajo, azul funcional y carbón */
 :root {
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
@@ -84,10 +84,10 @@ body {
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  --background: 214 33% 96%;
+  --background: 210 20% 97%;
   --foreground: 220 27% 12%;
   --border: 214 22% 86%;
-  --card: 0 0% 100%;
+  --card: 210 24% 99%;
   --card-foreground: 220 27% 12%;
   --card-border: 214 22% 88%;
   --sidebar: 220 27% 12%;
@@ -102,7 +102,7 @@ body {
   --popover-foreground: 220 27% 12%;
   --popover-border: 214 22% 88%;
   --primary: 213 86% 43%;
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 210 24% 98%;
   --secondary: 213 42% 93%;
   --secondary-foreground: 220 27% 18%;
   --muted: 214 30% 92%;
@@ -110,7 +110,7 @@ body {
   --accent: 220 27% 12%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 48%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive-foreground: 210 24% 98%;
   --input: 214 22% 78%;
   --ring: 213 86% 43%;
   --chart-1: 213 86% 43%;
@@ -121,7 +121,7 @@ body {
   --app-font-sans: 'Manrope', sans-serif;
   --app-font-serif: 'Space Grotesk', sans-serif;
   --app-font-mono: 'DM Mono', monospace;
-  --radius: 0.75rem;
+  --radius: 0.5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(213 86% 43% / 0);
   --shadow-xs: 0px 2px 0px 0px hsl(213 86% 43% / 0);
   --shadow-sm:
@@ -269,27 +269,12 @@ body {
     @apply font-sans antialiased bg-background text-foreground;
     min-width: 320px;
     letter-spacing: -0.01em;
-    background-image: radial-gradient(circle at 86% 4%, hsl(var(--primary) / .08), transparent 30rem);
   }
 }
 
 @layer utilities {
   .font-display { font-family: var(--app-font-serif); }
   .font-mono-data { font-family: var(--app-font-mono); letter-spacing: -0.04em; }
-  .paper-grid {
-    background-image: linear-gradient(to right, hsl(var(--primary) / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, hsl(var(--primary) / 0.045) 1px, transparent 1px);
-    background-size: 26px 26px;
-  }
-  .noise-overlay::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.035;
-    z-index: 50;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
-  }
 }
 
 @keyframes rise-in {
@@ -304,7 +289,7 @@ body {
 .animate-line { animation: pulse-line 1.7s ease-in-out infinite; }
 
 @layer components {
-   .field {
+  .field {
     width: 100%;
     border: 1px solid hsl(var(--input));
     border-radius: .55rem;
@@ -329,8 +314,8 @@ body {
     font-weight: 700;
     transition: transform .18s ease, background-color .18s ease, border-color .18s ease;
   }
-   .button-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); box-shadow: 0 5px 12px hsl(var(--primary) / .18), 0 2px 0 hsl(var(--foreground) / .14); }
-   .button-primary:hover { transform: translateY(-1px); background: hsl(var(--primary) / .9); box-shadow: 0 7px 16px hsl(var(--primary) / .22), 0 2px 0 hsl(var(--foreground) / .14); }
+  .button-primary { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .button-primary:hover { background: hsl(var(--primary) / .9); }
   .button-primary:active { transform: translateY(0); }
   .button-primary:disabled { cursor: wait; opacity: .6; transform: none; }
   .button-secondary { border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--foreground)); }
