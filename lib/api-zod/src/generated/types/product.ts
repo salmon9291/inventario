@@ -5,12 +5,15 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductSubcategory } from './productSubcategory';
 
 export interface Product {
   id: number;
   name: string;
   sku: string;
   category: string;
+  /** Optional product attributes such as size or color. */
+  subcategories: ProductSubcategory[];
   costPrice: number;
   salePrice: number;
   stock: number;

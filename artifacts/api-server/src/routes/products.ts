@@ -20,6 +20,17 @@ function hasValidImage(imageUrl: string | null | undefined) {
   return imageUrl == null || (imageUrl.startsWith("data:image/") && imageUrl.length <= MAX_IMAGE_LENGTH);
 }
 
+function hasDuplicateSubcategories(subcategories: Array<{ name: string; value: string }> | undefined) {
+  if (!subcategories) return false;
+  const seen = new Set<string>();
+  for (const item of subcategories) {
+    const key = `${item.name.trim().toLocaleLowerCase()}::${item.value.trim().toLocaleLowerCase()}`;
+    if (seen.has(key)) return true;
+    seen.add(key);
+  }
+  return false;
+}
+
 router.get("/products", async (req, res): Promise<void> => {
   const parsed = ListProductsQueryParams.safeParse(req.query);
   if (!parsed.success) {
@@ -51,6 +62,10 @@ router.post("/products", async (req, res): Promise<void> => {
     res.status(400).json({ error: "La existencia debe ser un número entero" });
     return;
   }
+  if (hasDuplicateSubcategories(parsed.data.subcategories)) {
+    res.status(400).json({ error: "No puedes repetir una subcategoría del producto" });
+    return;
+  }
   if (!hasValidImage(parsed.data.imageUrl)) {
     res.status(400).json({ error: "La imagen debe ser JPG, PNG o WebP y pesar menos de 1 MB" });
     return;
@@ -80,6 +95,10 @@ router.patch("/products/:id", async (req, res): Promise<void> => {
   }
   if (parsed.data.stock !== undefined && !Number.isInteger(parsed.data.stock)) {
     res.status(400).json({ error: "La existencia debe ser un número entero" });
+    return;
+  }
+  if (hasDuplicateSubcategories(parsed.data.subcategories)) {
+    res.status(400).json({ error: "No puedes repetir una subcategoría del producto" });
     return;
   }
   if (!hasValidImage(parsed.data.imageUrl)) {

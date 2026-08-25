@@ -1,11 +1,17 @@
 import { createInsertSchema } from "drizzle-zod";
-import { integer, numeric, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { integer, jsonb, numeric, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+
+export type ProductSubcategory = {
+  name: string;
+  value: string;
+};
 
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   sku: text("sku").notNull().unique(),
   category: text("category").notNull(),
+  subcategories: jsonb("subcategories").$type<ProductSubcategory[]>().notNull().default([]),
   costPrice: numeric("cost_price", { precision: 12, scale: 2, mode: "number" }).notNull(),
   salePrice: numeric("sale_price", { precision: 12, scale: 2, mode: "number" }).notNull(),
   stock: integer("stock").notNull().default(0),

@@ -25,11 +25,19 @@ export const ListProductsQueryParams = zod.object({
   "category": zod.coerce.string().optional()
 })
 
+
+
+
+
 export const ListProductsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "sku": zod.string(),
   "category": zod.string(),
+  "subcategories": zod.array(zod.object({
+  "name": zod.string().min(1),
+  "value": zod.string().min(1)
+})).describe('Optional product attributes such as size or color.'),
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),
@@ -46,6 +54,8 @@ export const ListProductsResponse = zod.array(ListProductsResponseItem)
 
 
 
+
+
 export const createProductBodyCostPriceMin = 0;
 
 export const createProductBodySalePriceMin = 0;
@@ -58,17 +68,29 @@ export const CreateProductBody = zod.object({
   "name": zod.string().min(1),
   "sku": zod.string().min(1),
   "category": zod.string().min(1),
+  "subcategories": zod.array(zod.object({
+  "name": zod.string().min(1),
+  "value": zod.string().min(1)
+})),
   "costPrice": zod.number().min(createProductBodyCostPriceMin),
   "salePrice": zod.number().min(createProductBodySalePriceMin),
   "stock": zod.number().min(createProductBodyStockMin),
   "imageUrl": zod.string().nullable()
 })
 
+
+
+
+
 export const CreateProductResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "sku": zod.string(),
   "category": zod.string(),
+  "subcategories": zod.array(zod.object({
+  "name": zod.string().min(1),
+  "value": zod.string().min(1)
+})).describe('Optional product attributes such as size or color.'),
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),
@@ -88,6 +110,8 @@ export const UpdateProductParams = zod.object({
 
 
 
+
+
 export const updateProductBodyCostPriceMin = 0;
 
 export const updateProductBodySalePriceMin = 0;
@@ -100,17 +124,29 @@ export const UpdateProductBody = zod.object({
   "name": zod.string().min(1).optional(),
   "sku": zod.string().min(1).optional(),
   "category": zod.string().min(1).optional(),
+  "subcategories": zod.array(zod.object({
+  "name": zod.string().min(1),
+  "value": zod.string().min(1)
+})).optional(),
   "costPrice": zod.number().min(updateProductBodyCostPriceMin).optional(),
   "salePrice": zod.number().min(updateProductBodySalePriceMin).optional(),
   "stock": zod.number().min(updateProductBodyStockMin).optional(),
   "imageUrl": zod.string().nullish()
 })
 
+
+
+
+
 export const UpdateProductResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "sku": zod.string(),
   "category": zod.string(),
+  "subcategories": zod.array(zod.object({
+  "name": zod.string().min(1),
+  "value": zod.string().min(1)
+})).describe('Optional product attributes such as size or color.'),
   "costPrice": zod.number(),
   "salePrice": zod.number(),
   "stock": zod.number(),

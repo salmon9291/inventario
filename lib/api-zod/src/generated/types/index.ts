@@ -10,5 +10,6 @@ export * from './healthStatus';
 export * from './listProductsParams';
 export * from './product';
 export * from './productInput';
+export * from './productSubcategory';
 export * from './productSummary';
 export * from './productUpdate';

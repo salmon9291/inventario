@@ -5,6 +5,7 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductSubcategory } from './productSubcategory';
 
 export interface ProductUpdate {
   /** @minLength 1 */
@@ -13,6 +14,7 @@ export interface ProductUpdate {
   sku?: string;
   /** @minLength 1 */
   category?: string;
+  subcategories?: ProductSubcategory[];
   /** @minimum 0 */
   costPrice?: number;
   /** @minimum 0 */

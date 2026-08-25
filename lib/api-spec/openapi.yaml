@@ -141,6 +141,11 @@ components:
           type: string
         category:
           type: string
+        subcategories:
+          type: array
+          description: Optional product attributes such as size or color.
+          items:
+            $ref: "#/components/schemas/ProductSubcategory"
         costPrice:
           type: number
         salePrice:
@@ -155,7 +160,17 @@ components:
         updatedAt:
           type: string
           format: date-time
-      required: [id, name, sku, category, costPrice, salePrice, stock, imageUrl, createdAt, updatedAt]
+      required: [id, name, sku, category, subcategories, costPrice, salePrice, stock, imageUrl, createdAt, updatedAt]
+    ProductSubcategory:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        value:
+          type: string
+          minLength: 1
+      required: [name, value]
     ProductInput:
       type: object
       properties:
@@ -168,6 +183,10 @@ components:
         category:
           type: string
           minLength: 1
+        subcategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductSubcategory"
         costPrice:
           type: number
           minimum: 0
@@ -179,7 +198,7 @@ components:
           minimum: 0
         imageUrl:
           type: ["string", "null"]
-      required: [name, sku, category, costPrice, salePrice, stock, imageUrl]
+      required: [name, sku, category, subcategories, costPrice, salePrice, stock, imageUrl]
     ProductUpdate:
       type: object
       properties:
@@ -192,6 +211,10 @@ components:
         category:
           type: string
           minLength: 1
+        subcategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductSubcategory"
         costPrice:
           type: number
           minimum: 0

@@ -9,11 +9,20 @@ export interface HealthStatus {
   status: string;
 }
 
+export interface ProductSubcategory {
+  /** @minLength 1 */
+  name: string;
+  /** @minLength 1 */
+  value: string;
+}
+
 export interface Product {
   id: number;
   name: string;
   sku: string;
   category: string;
+  /** Optional product attributes such as size or color. */
+  subcategories: ProductSubcategory[];
   costPrice: number;
   salePrice: number;
   stock: number;
@@ -30,6 +39,7 @@ export interface ProductInput {
   sku: string;
   /** @minLength 1 */
   category: string;
+  subcategories: ProductSubcategory[];
   /** @minimum 0 */
   costPrice: number;
   /** @minimum 0 */
@@ -47,6 +57,7 @@ export interface ProductUpdate {
   sku?: string;
   /** @minLength 1 */
   category?: string;
+  subcategories?: ProductSubcategory[];
   /** @minimum 0 */
   costPrice?: number;
   /** @minimum 0 */

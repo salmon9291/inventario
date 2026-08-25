@@ -39,6 +39,7 @@ type FormValues = {
   name: string;
   sku: string;
   category: string;
+  subcategories: Array<{ name: string; value: string }>;
   costPrice: number | '';
   salePrice: number | '';
   stock: number | '';
@@ -49,6 +50,7 @@ const emptyForm: FormValues = {
   name: '',
   sku: '',
   category: '',
+  subcategories: [],
   costPrice: '',
   salePrice: '',
   stock: '',
@@ -105,15 +107,18 @@ function ProductDialog({
 }) {
   const [form, setForm] = useState<FormValues>(emptyForm);
   const [imageError, setImageError] = useState('');
+  const [subcategoryError, setSubcategoryError] = useState('');
 
   useEffect(() => {
     if (!open) return;
     setImageError('');
+    setSubcategoryError('');
     if (editing) {
       setForm({
         name: editing.name,
         sku: editing.sku,
         category: editing.category,
+        subcategories: editing.subcategories ?? [],
         costPrice: editing.costPrice,
         salePrice: editing.salePrice,
         stock: editing.stock,
@@ -151,6 +156,38 @@ function ProductDialog({
     reader.readAsDataURL(file);
   };
 
+  const updateSubcategory = (index: number, key: 'name' | 'value', value: string) => {
+    setForm((current) => ({
+      ...current,
+      subcategories: current.subcategories.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: value } : item),
+    }));
+    setSubcategoryError('');
+  };
+
+  const addSubcategory = () => {
+    setForm((current) => ({ ...current, subcategories: [...current.subcategories, { name: '', value: '' }] }));
+    setSubcategoryError('');
+  };
+
+  const removeSubcategory = (index: number) => {
+    setForm((current) => ({ ...current, subcategories: current.subcategories.filter((_, itemIndex) => itemIndex !== index) }));
+    setSubcategoryError('');
+  };
+
+  const validateSubcategories = () => {
+    const filled = form.subcategories.filter((item) => item.name.trim() || item.value.trim());
+    if (filled.some((item) => !item.name.trim() || !item.value.trim())) {
+      setSubcategoryError('Completa el tipo y el valor de cada subcategoría.');
+      return false;
+    }
+    const keys = filled.map((item) => `${item.name.trim().toLocaleLowerCase()}::${item.value.trim().toLocaleLowerCase()}`);
+    if (new Set(keys).size !== keys.length) {
+      setSubcategoryError('Esa subcategoría ya existe en este producto.');
+      return false;
+    }
+    return true;
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-[hsl(var(--foreground)/.36)] p-0 sm:items-center sm:p-5" role="presentation">
       <div className="w-full max-w-xl overflow-hidden rounded-t-2xl border border-card-border bg-card shadow-2xl sm:rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="product-dialog-title">
@@ -170,9 +207,10 @@ function ProductDialog({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (form.costPrice === '' || form.salePrice === '' || form.stock === '') return;
+            if (form.costPrice === '' || form.salePrice === '' || form.stock === '' || !validateSubcategories()) return;
             onSubmit({
               ...form,
+              subcategories: form.subcategories.filter((item) => item.name.trim() && item.value.trim()).map((item) => ({ name: item.name.trim(), value: item.value.trim() })),
               costPrice: Number(form.costPrice),
               salePrice: Number(form.salePrice),
               stock: Number(form.stock),
@@ -194,6 +232,23 @@ function ProductDialog({
             <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Categoría</span>
             <input required value={form.category} onChange={(event) => update('category', event.target.value)} data-testid="input-product-category" className="field" placeholder="Papelería" />
           </label>
+          <div className="rounded-xl border border-card-border bg-secondary/20 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Subcategorías</p>
+                <p className="mt-1 text-xs text-muted-foreground">Agrega atributos como talla, color o material.</p>
+              </div>
+              <button type="button" onClick={addSubcategory} className="button-secondary h-8 px-3 text-xs" data-testid="button-add-subcategory"><Plus size={14} /> Agregar</button>
+            </div>
+            {form.subcategories.length > 0 && <div className="mt-3 space-y-2">
+              {form.subcategories.map((item, index) => <div key={index} className="flex items-center gap-2">
+                <input value={item.name} onChange={(event) => updateSubcategory(index, 'name', event.target.value)} className="field h-9 text-sm" placeholder="Tipo: Talla" aria-label={`Tipo de subcategoría ${index + 1}`} data-testid={`input-subcategory-name-${index}`} />
+                <input value={item.value} onChange={(event) => updateSubcategory(index, 'value', event.target.value)} className="field h-9 text-sm" placeholder="Valor: Mediana" aria-label={`Valor de subcategoría ${index + 1}`} data-testid={`input-subcategory-value-${index}`} />
+                <button type="button" onClick={() => removeSubcategory(index)} className="icon-button shrink-0 text-destructive" aria-label={`Quitar subcategoría ${index + 1}`} data-testid={`button-remove-subcategory-${index}`}><X size={15} /></button>
+              </div>)}
+            </div>}
+            {subcategoryError && <p className="mt-2 text-xs font-semibold text-destructive">{subcategoryError}</p>}
+          </div>
           <div className="rounded-xl border border-dashed border-input bg-secondary/25 p-3">
             <div className="flex items-center gap-3">
               <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[hsl(var(--primary)/.1)] text-primary">
@@ -285,7 +340,10 @@ function ProductRow({
           <p className="font-mono-data mt-0.5 text-[10px] uppercase text-muted-foreground">{product.sku}</p>
         </div>
       </div>
-      <span className="truncate text-xs text-muted-foreground">{product.category}</span>
+      <div className="min-w-0">
+        <span className="truncate text-xs text-muted-foreground">{product.category}</span>
+        {product.subcategories.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{product.subcategories.map((item) => <span key={`${item.name}-${item.value}`} className="rounded bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.name}: {item.value}</span>)}</div>}
+      </div>
       <span className="font-mono-data text-right text-xs">{formatCurrency(product.costPrice)}</span>
       <span className="font-mono-data text-right text-xs font-medium">{formatCurrency(product.salePrice)}</span>
       <span className={`font-mono-data text-right text-sm font-medium ${low ? 'text-accent' : ''}`}>{number.format(product.stock)} {low && <AlertTriangle className="mb-0.5 ml-1 inline-block" size={13} />}</span>
@@ -316,6 +374,7 @@ function ProductMobileCard({
           <div className="min-w-0">
             <p className="truncate text-sm font-bold">{product.name}</p>
             <p className="font-mono-data mt-0.5 text-[10px] uppercase text-muted-foreground">{product.sku} · {product.category}</p>
+            {product.subcategories.length > 0 && <div className="mt-1 flex flex-wrap gap-1">{product.subcategories.map((item) => <span key={`${item.name}-${item.value}`} className="rounded bg-secondary px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.name}: {item.value}</span>)}</div>}
           </div>
         </div>
         <div className="flex gap-1">
