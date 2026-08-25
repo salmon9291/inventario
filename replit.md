@@ -4,7 +4,9 @@ Aplicación web para controlar productos, existencias y rentabilidad de una tien
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `PORT=5000 pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `PORT=3000 BASE_PATH=/ pnpm --filter @workspace/inventario-catalogo dev` — run the catalog frontend (port 3000)
+- The `correr` workflow starts both services together; the frontend proxies `/api` requests to the API server.
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec

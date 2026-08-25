@@ -347,7 +347,9 @@ export default function Catalog() {
   const [lowOnly, setLowOnly] = useState(false);
   const [notice, setNotice] = useState('');
 
-  const allProducts = products ?? [];
+  // Keep the catalog renderable if an unexpected response slips through the
+  // client contract (for example, a proxy returning an HTML error page).
+  const allProducts = Array.isArray(products) ? products : [];
   const categories = useMemo(() => ['Todas', ...Array.from(new Set(allProducts.map((product) => product.category))).sort()], [allProducts]);
   const visibleProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
