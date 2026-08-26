@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
+  Bot,
   Boxes,
   ChevronDown,
   Filter,
@@ -21,6 +22,7 @@ import {
   WalletCards,
   X,
 } from 'lucide-react';
+import AssistantPanel from '@/components/assistant-panel';
 import {
   getGetProductSummaryQueryKey,
   getListProductsQueryKey,
@@ -400,6 +402,7 @@ export default function Catalog() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
   const [lowOnly, setLowOnly] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -502,6 +505,7 @@ export default function Catalog() {
           <div className="mt-5 border-t border-sidebar-border pt-4">
             <button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-clear-filters-sidebar" className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><SlidersHorizontal size={14} /> Limpiar filtros</button>
             <button type="button" onClick={openNew} data-testid="button-sidebar-new-product" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Plus size={14} /> Nuevo producto</button>
+           <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-sidebar-open-assistant" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Bot size={14} /> Asistente de inventario</button>
           </div>
         </div>
         <div className="border-t border-sidebar-border p-4">
@@ -520,6 +524,7 @@ export default function Catalog() {
               <h1 className="font-display text-[18px] font-semibold tracking-tight">Inventario</h1>
             </div>
             <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+               <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-header-open-assistant" className="button-secondary h-9 px-3 text-xs sm:px-3.5"><Bot size={15} /> <span className="hidden sm:inline">Asistente</span></button>
               <button type="button" onClick={refresh} disabled={productsLoading || summaryLoading} data-testid="button-refresh-catalog" className="icon-button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><RefreshCw size={15} className={productsLoading || summaryLoading ? 'animate-spin' : ''} /></button>
               <button type="button" onClick={openNew} data-testid="button-new-product-header" className="button-primary h-9 px-3 text-xs sm:px-4"><Plus size={15} /> <span className="hidden sm:inline">Nuevo producto</span><span className="sm:hidden">Nuevo</span></button>
             </div>
@@ -580,6 +585,7 @@ export default function Catalog() {
         </main>
       </div>
       <ProductDialog open={dialogOpen} editing={editing} pending={pending} onClose={() => setDialogOpen(false)} onSubmit={handleSubmit} />
+      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
   );
 }

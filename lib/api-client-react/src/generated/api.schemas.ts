@@ -77,6 +77,37 @@ export interface ProductSummary {
   categories: number;
 }
 
+export type AssistantChatMessageRole = typeof AssistantChatMessageRole[keyof typeof AssistantChatMessageRole];
+
+
+export const AssistantChatMessageRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export interface AssistantChatMessage {
+  role: AssistantChatMessageRole;
+  /**
+     * @minLength 1
+     * @maxLength 4000
+     */
+  content: string;
+}
+
+export interface AssistantChatInput {
+  /**
+     * @minLength 1
+     * @maxLength 2000
+     */
+  message: string;
+  /** @maxItems 12 */
+  history?: AssistantChatMessage[];
+}
+
+export interface AssistantChatResponse {
+  reply: string;
+}
+
 export type ListProductsParams = {
 search?: string;
 category?: string;

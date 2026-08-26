@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: products
     description: Product catalog operations
+  - name: assistant
+    description: Inventory assistant operations
 paths:
   /healthz:
     get:
@@ -121,6 +123,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductSummary"
+  /assistant/chat:
+    post:
+      operationId: chatWithInventoryAssistant
+      tags: [assistant]
+      summary: Ask the inventory assistant a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssistantChatInput"
+      responses:
+        "200":
+          description: Assistant response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssistantChatResponse"
+        "400":
+          description: Invalid message
+        "502":
+          description: AI provider error
+        "503":
+          description: AI provider is not configured
 components:
   schemas:
     HealthStatus:
@@ -242,4 +268,34 @@ components:
         categories:
           type: number
       required: [totalProducts, totalUnits, inventoryValue, projectedProfit, lowStockCount, categories]
+    AssistantChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          minLength: 1
+          maxLength: 4000
+      required: [role, content]
+    AssistantChatInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        history:
+          type: array
+          maxItems: 12
+          items:
+            $ref: "#/components/schemas/AssistantChatMessage"
+      required: [message]
+    AssistantChatResponse:
+      type: object
+      properties:
+        reply:
+          type: string
+      required: [reply]
 

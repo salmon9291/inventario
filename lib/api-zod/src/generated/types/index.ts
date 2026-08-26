@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './assistantChatInput';
+export * from './assistantChatMessage';
+export * from './assistantChatMessageRole';
+export * from './assistantChatResponse';
 export * from './healthStatus';
 export * from './listProductsParams';
 export * from './product';

@@ -179,3 +179,27 @@ export const GetProductSummaryResponse = zod.object({
 })
 
 
+/**
+ * @summary Ask the inventory assistant a question
+ */
+export const chatWithInventoryAssistantBodyMessageMax = 2000;
+
+export const chatWithInventoryAssistantBodyHistoryItemContentMax = 4000;
+
+export const chatWithInventoryAssistantBodyHistoryMax = 12;
+
+
+
+export const ChatWithInventoryAssistantBody = zod.object({
+  "message": zod.string().min(1).max(chatWithInventoryAssistantBodyMessageMax),
+  "history": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string().min(1).max(chatWithInventoryAssistantBodyHistoryItemContentMax)
+})).max(chatWithInventoryAssistantBodyHistoryMax).optional()
+})
+
+export const ChatWithInventoryAssistantResponse = zod.object({
+  "reply": zod.string()
+})
+
+

@@ -20,6 +20,8 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AssistantChatInput,
+  AssistantChatResponse,
   HealthStatus,
   ListProductsParams,
   Product,
@@ -507,4 +509,75 @@ export function useGetProductSummary<TData = Awaited<ReturnType<typeof getProduc
 
 
 
+
+export const getChatWithInventoryAssistantUrl = () => {
+
+
+
+
+  return `/api/assistant/chat`
+}
+
+/**
+ * @summary Ask the inventory assistant a question
+ */
+export const chatWithInventoryAssistant = async (assistantChatInput: AssistantChatInput, options?: Parameters<typeof customFetch>[1]): Promise<AssistantChatResponse> => {
+
+  return customFetch<AssistantChatResponse>(getChatWithInventoryAssistantUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(assistantChatInput)
+  }
+);}
+
+
+
+
+
+export const getChatWithInventoryAssistantMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithInventoryAssistant>>, TError,{data: BodyType<AssistantChatInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof chatWithInventoryAssistant>>, TError,{data: BodyType<AssistantChatInput>}, TContext> => {
+
+const mutationKey = ['chatWithInventoryAssistant'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof chatWithInventoryAssistant>>, {data: BodyType<AssistantChatInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  chatWithInventoryAssistant(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChatWithInventoryAssistantMutationResult = NonNullable<Awaited<ReturnType<typeof chatWithInventoryAssistant>>>
+    export type ChatWithInventoryAssistantMutationBody = BodyType<AssistantChatInput>
+    export type ChatWithInventoryAssistantMutationError = ErrorType<void>
+
+    /**
+ * @summary Ask the inventory assistant a question
+ */
+export const useChatWithInventoryAssistant = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof chatWithInventoryAssistant>>, TError,{data: BodyType<AssistantChatInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof chatWithInventoryAssistant>>,
+        TError,
+        {data: BodyType<AssistantChatInput>},
+        TContext
+      > => {
+      return useMutation(getChatWithInventoryAssistantMutationOptions(options));
+    }
 
