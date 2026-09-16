@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTheme } from '@/theme';
 import {
   AlertTriangle,
   Bot,
@@ -9,12 +10,14 @@ import {
   ImagePlus,
   Layers3,
   Menu,
+  Moon,
   Package2,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   SlidersHorizontal,
+  Sun,
   Tags,
   Trash2,
   TrendingUp,
@@ -84,9 +87,28 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function ThemeToggle({ compact = false }: { compact?: boolean }) {
+  const { theme, setTheme } = useTheme();
+  const dark = theme === 'dark';
+
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(dark ? 'light' : 'dark')}
+      data-testid="button-toggle-theme"
+      className={compact ? 'icon-button' : 'flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'}
+      title={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+      aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+    >
+      {dark ? <Sun size={15} /> : <Moon size={15} />}
+      {!compact && <span>{dark ? 'Modo claro' : 'Modo oscuro'}</span>}
+    </button>
+  );
+}
+
 function ProductAvatar({ product, size = 'normal' }: { product: Product; size?: 'normal' | 'large' }) {
   return (
-    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[hsl(var(--primary)/.1)] font-mono-data font-medium text-primary ${size === 'large' ? 'h-10 w-10 text-[11px]' : 'h-9 w-9 text-[10px]'}`}>
+    <div className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[hsl(var(--primary)/.12)] bg-[hsl(var(--primary)/.1)] font-mono-data font-medium text-primary shadow-sm ${size === 'large' ? 'h-10 w-10 text-[11px]' : 'h-9 w-9 text-[10px]'}`}>
       {product.imageUrl ? <img src={product.imageUrl} alt="" className="h-full w-full object-cover" /> : initials(product.name)}
     </div>
   );
@@ -308,7 +330,7 @@ function SummaryCard({
   accent?: 'green' | 'coral' | 'lime' | 'blue';
 }) {
   return (
-    <article className="border-b border-card-border px-1 py-3 sm:border-b-0 sm:border-l sm:px-4 sm:py-1 first:sm:border-l-0">
+    <article className={`relative overflow-hidden rounded-xl border border-card-border bg-card px-3 py-3 shadow-sm sm:px-4 sm:py-4 ${accent === 'coral' ? 'before:bg-accent' : accent === 'lime' ? 'before:bg-[hsl(var(--chart-3))]' : accent === 'blue' ? 'before:bg-[hsl(var(--chart-5))]' : 'before:bg-primary'} before:absolute before:bottom-0 before:left-0 before:top-0 before:w-0.5`}>
       <div className={`mb-3 flex h-7 w-7 items-center justify-center rounded-md ${accent === 'coral' ? 'bg-[hsl(var(--accent)/.12)] text-accent' : accent === 'lime' ? 'bg-[hsl(var(--chart-3)/.14)] text-primary' : accent === 'blue' ? 'bg-[hsl(var(--chart-5)/.12)] text-[hsl(var(--chart-5))]' : 'bg-[hsl(var(--primary)/.1)] text-primary'}`}>
         {icon}
       </div>
@@ -331,7 +353,7 @@ function ProductRow({
   const low = product.stock <= 5;
   const margin = product.salePrice - product.costPrice;
   return (
-    <div className="group grid grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] items-center gap-3 border-b border-card-border px-4 py-3.5 last:border-0 hover:bg-[hsl(var(--secondary)/.35)] sm:px-5" data-testid={`row-product-${product.id}`}>
+    <div className="group grid grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] items-center gap-3 border-b border-card-border px-4 py-3.5 last:border-0 hover:bg-[hsl(var(--secondary)/.42)] sm:px-5" data-testid={`row-product-${product.id}`}>
       <div className="flex min-w-0 items-center gap-3">
         <ProductAvatar product={product} />
         <div className="min-w-0">
@@ -348,7 +370,7 @@ function ProductRow({
       <span className={`font-mono-data text-right text-sm font-medium ${low ? 'text-accent' : ''}`}>{number.format(product.stock)} {low && <AlertTriangle className="mb-0.5 ml-1 inline-block" size={13} />}</span>
       <span className="font-mono-data text-right text-xs text-primary">{formatCurrency(margin)}</span>
       <div className="flex justify-end gap-1 opacity-70 transition-opacity group-hover:opacity-100">
-        <button type="button" onClick={() => onEdit(product)} data-testid={`button-edit-product-${product.id}`} className="icon-button" title="Editar producto" aria-label={`Editar ${product.name}`}><Pencil size={15} /></button>
+        <button type="button" onClick={() => onEdit(product)} data-testid={`button-edit-product-${product.id}`} className="icon-button bg-card/70" title="Editar producto" aria-label={`Editar ${product.name}`}><Pencil size={15} /></button>
         <button type="button" onClick={() => onDelete(product)} data-testid={`button-delete-product-${product.id}`} className="icon-button text-destructive hover:bg-[hsl(var(--destructive)/.1)]" title="Eliminar producto" aria-label={`Eliminar ${product.name}`}><Trash2 size={15} /></button>
       </div>
     </div>
@@ -366,7 +388,7 @@ function ProductMobileCard({
 }) {
   const low = product.stock <= 5;
   return (
-    <article className="border-b border-card-border p-4 last:border-0" data-testid={`card-product-${product.id}`}>
+    <article className="border-b border-card-border p-4 transition-colors hover:bg-secondary/25 last:border-0" data-testid={`card-product-${product.id}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <ProductAvatar product={product} size="large" />
@@ -489,8 +511,8 @@ export default function Catalog() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[208px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+       <div className="min-h-[100dvh] bg-background">
+       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[208px] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
         <div className="flex h-[64px] items-center border-b border-sidebar-border px-5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Package2 size={16} strokeWidth={2.5} /></div>
@@ -504,8 +526,7 @@ export default function Catalog() {
           </nav>
           <div className="mt-5 border-t border-sidebar-border pt-4">
             <button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-clear-filters-sidebar" className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><SlidersHorizontal size={14} /> Limpiar filtros</button>
-            <button type="button" onClick={openNew} data-testid="button-sidebar-new-product" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Plus size={14} /> Nuevo producto</button>
-           <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-sidebar-open-assistant" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Bot size={14} /> Asistente de inventario</button>
+             <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-sidebar-open-assistant" className="mt-1 flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-xs text-sidebar-foreground/60 transition hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"><Bot size={14} /> Asistente de inventario</button>
           </div>
         </div>
         <div className="border-t border-sidebar-border p-4">
@@ -517,32 +538,36 @@ export default function Catalog() {
       </aside>
 
       <div className="md:pl-[208px]">
-        <header className="sticky top-0 z-20 border-b border-border bg-background">
+         <header className="sticky top-0 z-20 border-b border-border bg-background/90 shadow-[0_1px_0_hsl(var(--border)/.35)] backdrop-blur-md">
           <div className="flex h-[60px] items-center justify-between px-4 sm:px-7 lg:px-9">
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => setMobileMenu((open) => !open)} data-testid="button-toggle-mobile-menu" className="icon-button md:hidden" aria-label="Abrir menú"><Menu size={18} /></button>
+              <button type="button" onClick={() => setMobileMenu((open) => !open)} data-testid="button-toggle-mobile-menu" className="icon-button md:hidden" aria-expanded={mobileMenu} aria-controls="mobile-navigation" aria-label={mobileMenu ? 'Cerrar menú' : 'Abrir menú'}><Menu size={18} /></button>
               <h1 className="font-display text-[18px] font-semibold tracking-tight">Inventario</h1>
             </div>
-            <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-               <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-header-open-assistant" className="button-secondary h-9 px-3 text-xs sm:px-3.5"><Bot size={15} /> <span className="hidden sm:inline">Asistente</span></button>
+             <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+               <button type="button" onClick={() => setAssistantOpen(true)} data-testid="button-header-open-assistant" className="button-secondary h-9 px-3 text-xs md:hidden sm:px-3.5"><Bot size={15} /> <span className="hidden sm:inline">Asistente</span></button>
               <button type="button" onClick={refresh} disabled={productsLoading || summaryLoading} data-testid="button-refresh-catalog" className="icon-button" title="Actualizar catálogo" aria-label="Actualizar catálogo"><RefreshCw size={15} className={productsLoading || summaryLoading ? 'animate-spin' : ''} /></button>
+               <ThemeToggle compact />
               <button type="button" onClick={openNew} data-testid="button-new-product-header" className="button-primary h-9 px-3 text-xs sm:px-4"><Plus size={15} /> <span className="hidden sm:inline">Nuevo producto</span><span className="sm:hidden">Nuevo</span></button>
             </div>
           </div>
-          {mobileMenu && <div className="border-t border-border bg-card px-4 py-3 md:hidden"><div className="flex items-center gap-2 text-sm font-semibold text-primary"><Package2 size={15} /> Inventario <span className="font-mono-data ml-auto text-xs">{derivedSummary.totalProducts} productos</span></div><button type="button" onClick={() => { setSearch(''); setCategory('Todas'); setLowOnly(false); setMobileMenu(false); }} data-testid="button-mobile-clear-filters" className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:underline">Limpiar filtros</button></div>}
+           {mobileMenu && <div id="mobile-navigation" className="border-t border-border bg-card px-4 py-3 md:hidden"><div className="flex items-center gap-2 text-sm font-semibold text-primary"><Package2 size={15} /> Inventario <span className="font-mono-data ml-auto text-xs">{derivedSummary.totalProducts} productos</span></div><p className="mt-2 text-xs text-muted-foreground">Usa el botón + para agregar productos y el ícono de luna para cambiar la apariencia.</p></div>}
         </header>
 
         <main className="min-h-[calc(100dvh-60px)] px-4 py-6 sm:px-7 sm:py-7 lg:px-9">
           <div className="mx-auto max-w-[1420px]">
-            <section className="animate-rise">
-              <div><h2 className="font-display text-2xl font-semibold tracking-[-.035em] sm:text-3xl">Productos</h2><p className="mt-1 text-sm text-muted-foreground">Existencias, precios y margen por producto.</p></div>
+             <section className="animate-rise">
+               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                 <div><div className="mb-2 flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--chart-3))] shadow-[0_0_0_4px_hsl(var(--chart-3)/.12)]" /><span className="font-mono-data text-[10px] font-medium uppercase tracking-[.16em] text-muted-foreground">Panel de operación</span></div><h2 className="font-display text-2xl font-semibold tracking-[-.035em] sm:text-3xl">Productos</h2><p className="mt-1 text-sm text-muted-foreground">Existencias, precios y margen por producto.</p></div>
+                 <p className="hidden font-mono-data text-[10px] uppercase tracking-[.12em] text-muted-foreground sm:block">Actualizado en tiempo real</p>
+               </div>
             </section>
 
             {notice && <div className="mt-5 flex items-center justify-between rounded-lg border border-[hsl(var(--chart-3)/.5)] bg-[hsl(var(--chart-3)/.13)] px-4 py-3 text-sm text-primary animate-rise" data-testid="status-success"><span>{notice}</span><button type="button" onClick={() => setNotice('')} data-testid="button-dismiss-notice" aria-label="Cerrar aviso"><X size={15} /></button></div>}
             {queryError && <div className="mt-5 flex items-center justify-between gap-4 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-error"><span>No pudimos cargar todo el catálogo. Revisa tu conexión e inténtalo otra vez.</span><button type="button" onClick={refresh} data-testid="button-retry-catalog" className="button-secondary h-8 shrink-0 border-[hsl(var(--destructive)/.25)] px-3 text-xs text-destructive">Reintentar</button></div>}
             {(createProduct.error || updateProduct.error || deleteProduct.error) && <div className="mt-5 rounded-lg border border-[hsl(var(--destructive)/.3)] bg-[hsl(var(--destructive)/.07)] px-4 py-3 text-sm text-destructive" data-testid="status-mutation-error">{errorText(createProduct.error || updateProduct.error || deleteProduct.error)}</div>}
 
-            <section className="mt-7 grid grid-cols-2 gap-x-4 border-y border-card-border bg-card px-3 py-3 sm:grid-cols-4 sm:px-0 sm:py-4">
+             <section className="mt-7 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
               {summaryLoading ? [1, 2, 3, 4].map((item) => <div key={item} className="h-[112px] animate-pulse border-l border-card-border bg-card/70 first:border-l-0" data-testid={`skeleton-summary-${item}`} />) : <>
                 <SummaryCard label="Productos" value={number.format(derivedSummary.totalProducts)} detail={`${derivedSummary.categories} categorías activas`} icon={<Boxes size={18} />} accent="green" />
                 <SummaryCard label="Unidades" value={number.format(derivedSummary.totalUnits)} detail="piezas en existencia" icon={<Layers3 size={18} />} accent="lime" />
@@ -551,8 +576,8 @@ export default function Catalog() {
               </>}
             </section>
 
-            {lowProducts.length > 0 && <section className="mt-5 border-y border-[hsl(var(--accent)/.32)] bg-[hsl(var(--accent)/.06)]" data-testid="section-low-stock">
-              <div className="flex flex-col gap-3 px-3 py-3 sm:flex-row sm:items-center sm:px-4">
+             {lowProducts.length > 0 && <section className="mt-5 overflow-hidden rounded-xl border border-[hsl(var(--accent)/.28)] bg-[linear-gradient(90deg,hsl(var(--accent)/.10),hsl(var(--accent)/.04))] shadow-sm" data-testid="section-low-stock">
+               <div className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:px-5">
                 <div className="flex items-center gap-2 text-accent"><AlertTriangle size={16} /><span className="text-xs font-bold">Stock bajo</span><span className="font-mono-data text-[11px] font-bold">{derivedSummary.lowStockCount}</span></div>
                 <div className="hidden h-4 w-px bg-accent/25 sm:block" />
                 <div className="flex flex-1 flex-wrap gap-x-5 gap-y-1 text-xs text-foreground/75">
@@ -564,7 +589,7 @@ export default function Catalog() {
 
             {(lowOnly || search || category !== 'Todas') && <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"><span>Filtros:</span>{lowOnly && <button type="button" onClick={() => setLowOnly(false)} data-testid="button-remove-low-stock-filter" className="inline-flex items-center gap-1 border border-[hsl(var(--accent)/.28)] bg-[hsl(var(--accent)/.08)] px-2 py-1 font-semibold text-accent">Stock bajo <X size={11} /></button>}{search && <button type="button" onClick={() => setSearch('')} data-testid="button-remove-search-filter" className="inline-flex max-w-[180px] items-center gap-1 truncate border border-border bg-card px-2 py-1 font-semibold text-foreground">“{search}” <X size={11} /></button>}{category !== 'Todas' && <button type="button" onClick={() => setCategory('Todas')} data-testid="button-remove-category-filter" className="inline-flex items-center gap-1 border border-border bg-card px-2 py-1 font-semibold text-foreground">{category} <X size={11} /></button>}</div>}
 
-            <section className="mt-6 overflow-hidden border border-card-border bg-card">
+             <section className="mt-6 overflow-hidden rounded-2xl border border-card-border bg-card shadow-[0_12px_35px_hsl(var(--foreground)/.045)]">
               <div className="border-b border-card-border px-4 py-4 sm:px-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div><h3 className="font-display text-lg font-bold tracking-tight">Todos los productos</h3><p className="mt-0.5 text-xs text-muted-foreground">{visibleProducts.length} de {allProducts.length} registros visibles</p></div>
@@ -575,7 +600,7 @@ export default function Catalog() {
                 </div>
               </div>
               {productsLoading ? <div className="space-y-0" data-testid="product-list-loading">{[1, 2, 3, 4, 5].map((item) => <div key={item} className="flex h-[70px] animate-pulse items-center gap-4 border-b border-card-border px-5"><span className="h-9 w-9 rounded-lg bg-secondary" /><span className="h-3 w-44 rounded bg-secondary" /><span className="ml-auto h-3 w-20 rounded bg-secondary" /></div>)}</div> : visibleProducts.length === 0 ? <div className="flex min-h-[270px] flex-col items-center justify-center px-5 text-center" data-testid="empty-product-list"><div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-muted-foreground"><Package2 size={22} /></div><h4 className="font-display text-lg font-bold">{allProducts.length === 0 ? 'Tu catálogo empieza aquí' : 'No hay coincidencias'}</h4><p className="mt-1 max-w-sm text-xs text-muted-foreground">{allProducts.length === 0 ? 'Agrega el primer producto para empezar a ver tus existencias.' : 'Prueba con otra búsqueda o limpia los filtros activos.'}</p><button type="button" onClick={allProducts.length === 0 ? openNew : () => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-empty-product-action" className="button-primary mt-5 h-9 px-4 text-xs">{allProducts.length === 0 ? 'Agregar producto' : 'Limpiar filtros'}</button></div> : <>
-                <div className="hidden overflow-x-auto md:block"><div className="grid min-w-[790px] grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] gap-3 bg-secondary/45 px-4 py-2.5 font-mono-data text-[9px] uppercase tracking-[.13em] text-muted-foreground sm:px-5"><span>Producto</span><span>Categoría</span><span className="text-right">Costo</span><span className="text-right">Venta</span><span className="text-right">Stock</span><span className="text-right">Margen</span><span /></div>{visibleProducts.map((product) => <ProductRow key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} />)}</div>
+                 <div className="hidden overflow-x-auto md:block"><div className="grid min-w-[790px] grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] gap-3 border-y border-card-border bg-secondary/35 px-4 py-2.5 font-mono-data text-[9px] uppercase tracking-[.13em] text-muted-foreground sm:px-5"><span>Producto</span><span>Categoría</span><span className="text-right">Costo</span><span className="text-right">Venta</span><span className="text-right">Stock</span><span className="text-right">Margen</span><span /></div>{visibleProducts.map((product) => <ProductRow key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} />)}</div>
                 <div className="md:hidden">{visibleProducts.map((product) => <ProductMobileCard key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} />)}</div>
               </>}
               {visibleProducts.length > 0 && <div className="flex items-center justify-between border-t border-card-border bg-secondary/25 px-4 py-3 text-[10px] text-muted-foreground sm:px-5"><span>Margen unitario = precio de venta − costo</span><span className="font-mono-data">{visibleProducts.length} registros</span></div>}

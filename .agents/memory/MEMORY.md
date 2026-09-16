@@ -1,1 +1,2 @@
 - [API Zod integer compatibility](api-zod-integer-compatibility.md) — generated integer schemas use an unavailable Zod API; enforce integer semantics at the server boundary.
+- [Local theme provider compatibility](theme-provider-compatibility.md) — use the app-local light/dark provider; the installed next-themes runtime triggers an invalid hook call.
