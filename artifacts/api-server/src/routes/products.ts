@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { and, asc, eq, ilike, sql } from "drizzle-orm";
-import { db, productsTable } from "@workspace/db";
+import { db, inventoryMovementsTable, productsTable } from "@workspace/db";
 import {
   CreateProductBody,
   CreateProductResponse,
@@ -71,7 +71,21 @@ router.post("/products", async (req, res): Promise<void> => {
     return;
   }
   try {
-    const [product] = await db.insert(productsTable).values(parsed.data).returning();
+    const [product] = await db.transaction(async (tx) => {
+      const [createdProduct] = await tx.insert(productsTable).values(parsed.data).returning();
+      if (createdProduct.stock > 0) {
+        await tx.insert(inventoryMovementsTable).values({
+          productId: createdProduct.id,
+          type: "purchase",
+          quantity: createdProduct.stock,
+          unitPrice: createdProduct.costPrice,
+          stockAfter: createdProduct.stock,
+          counterparty: "Saldo inicial",
+          note: "Existencia inicial del producto",
+        });
+      }
+      return [createdProduct];
+    });
     res.status(201).json(CreateProductResponse.parse(product));
   } catch (error) {
     if (error instanceof Error && error.message.includes("duplicate key")) {

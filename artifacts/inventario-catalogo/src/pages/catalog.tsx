@@ -3,10 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTheme } from '@/theme';
 import {
   AlertTriangle,
+  ArrowDownToLine,
+  ArrowUpFromLine,
   Bot,
   Boxes,
   ChevronDown,
   Filter,
+  History,
   ImagePlus,
   Layers3,
   Menu,
@@ -30,12 +33,18 @@ import {
   getGetProductSummaryQueryKey,
   getListProductsQueryKey,
   useCreateProduct,
+  getListMovementsQueryKey,
+  useCreateMovement,
   useDeleteProduct,
   useGetProductSummary,
+  useListMovements,
   useListProducts,
   useUpdateProduct,
+  type InventoryMovement,
+  type InventoryMovementInput,
   type Product,
   type ProductInput,
+  type ProductUpdate,
 } from '@workspace/api-client-react';
 
 type FormValues = {
@@ -229,7 +238,7 @@ function ProductDialog({
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            if (form.costPrice === '' || form.salePrice === '' || form.stock === '' || !validateSubcategories()) return;
+            if (form.costPrice === '' || form.salePrice === '' || (!editing && form.stock === '') || !validateSubcategories()) return;
             onSubmit({
               ...form,
               subcategories: form.subcategories.filter((item) => item.name.trim() && item.value.trim()).map((item) => ({ name: item.name.trim(), value: item.value.trim() })),
@@ -300,8 +309,9 @@ function ProductDialog({
               <input required min="0" step="0.01" type="number" value={form.salePrice} onChange={(event) => update('salePrice', event.target.value)} data-testid="input-product-sale" className="field font-mono-data" placeholder="0.00" />
             </label>
             <label className="space-y-1.5">
-              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Existencia</span>
-              <input required min="0" step="1" type="number" value={form.stock} onChange={(event) => update('stock', event.target.value)} data-testid="input-product-stock" className="field font-mono-data" placeholder="0" />
+              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{editing ? 'Existencia actual' : 'Existencia inicial'}</span>
+              <input required={!editing} disabled={Boolean(editing)} min="0" step="1" type="number" value={form.stock} onChange={(event) => update('stock', event.target.value)} data-testid="input-product-stock" className={`field font-mono-data ${editing ? 'cursor-not-allowed opacity-65' : ''}`} placeholder="0" />
+              {editing && <p className="text-[10px] leading-4 text-muted-foreground">Actualiza existencias desde el Kardex.</p>}
             </label>
           </div>
           <div className="flex flex-col-reverse gap-2 border-t border-card-border pt-4 sm:flex-row sm:justify-end">
@@ -341,19 +351,160 @@ function SummaryCard({
   );
 }
 
+function MovementDialog({
+  product,
+  open,
+  onClose,
+  onSaved,
+}: {
+  product: Product | null;
+  open: boolean;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [type, setType] = useState<'purchase' | 'sale'>('purchase');
+  const [quantity, setQuantity] = useState<number | ''>('');
+  const [unitPrice, setUnitPrice] = useState<number | ''>('');
+  const [counterparty, setCounterparty] = useState('');
+  const [note, setNote] = useState('');
+  const movementParams = product ? { productId: product.id } : undefined;
+  const movementsQuery = useListMovements(movementParams, {
+    query: { enabled: open && Boolean(product) },
+  });
+  const createMovement = useCreateMovement();
+
+  useEffect(() => {
+    if (!open || !product) return;
+    setType('purchase');
+    setQuantity('');
+    setUnitPrice(product.costPrice);
+    setCounterparty('');
+    setNote('');
+  }, [open, product]);
+
+  if (!open || !product) return null;
+
+  const changeType = (nextType: 'purchase' | 'sale') => {
+    setType(nextType);
+    setUnitPrice(nextType === 'purchase' ? product.costPrice : product.salePrice);
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (quantity === '' || unitPrice === '' || quantity < 1 || unitPrice < 0) return;
+    const data: InventoryMovementInput = {
+      productId: product.id,
+      type,
+      quantity: Number(quantity),
+      unitPrice: Number(unitPrice),
+      ...(counterparty.trim() ? { counterparty: counterparty.trim() } : {}),
+      ...(note.trim() ? { note: note.trim() } : {}),
+    };
+    createMovement.mutate({ data }, {
+      onSuccess: () => {
+        onSaved();
+        void movementsQuery.refetch();
+        setQuantity('');
+        setCounterparty('');
+        setNote('');
+      },
+    });
+  };
+
+  const movementError = createMovement.error ? errorText(createMovement.error) : '';
+  const movements = movementsQuery.data ?? [];
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-[hsl(var(--foreground)/.42)] p-0 sm:items-center sm:p-5" role="presentation">
+      <div className="flex max-h-[100dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-2xl border border-card-border bg-card shadow-2xl sm:max-h-[calc(100dvh-2.5rem)] sm:rounded-2xl" role="dialog" aria-modal="true" aria-labelledby="movement-dialog-title">
+        <div className="flex shrink-0 items-start justify-between border-b border-card-border px-5 py-4 sm:px-7">
+          <div className="min-w-0">
+            <p className="font-mono-data text-[10px] uppercase tracking-[.18em] text-muted-foreground">Control de existencias</p>
+            <h2 id="movement-dialog-title" className="mt-1 truncate font-display text-xl font-bold tracking-tight sm:text-2xl">Kardex · {product.name}</h2>
+            <p className="mt-1 font-mono-data text-[10px] uppercase text-muted-foreground">{product.sku} · stock actual {number.format(product.stock)} piezas</p>
+          </div>
+          <button type="button" onClick={onClose} data-testid="button-close-movement-dialog" className="icon-button shrink-0" aria-label="Cerrar Kardex"><X size={18} /></button>
+        </div>
+
+        <div className="grid min-h-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_minmax(260px,.9fr)]">
+          <form onSubmit={handleSubmit} className="space-y-4 border-b border-card-border px-5 py-5 lg:border-b-0 lg:border-r sm:px-7 sm:py-6">
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-secondary/65 p-1">
+              <button type="button" onClick={() => changeType('purchase')} data-testid="button-movement-purchase" className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold transition ${type === 'purchase' ? 'bg-card text-primary shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><ArrowDownToLine size={15} /> Entrada / compra</button>
+              <button type="button" onClick={() => changeType('sale')} data-testid="button-movement-sale" className={`flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-xs font-bold transition ${type === 'sale' ? 'bg-card text-accent shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}><ArrowUpFromLine size={15} /> Salida / venta</button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Cantidad</span>
+                <input required min="1" step="1" type="number" value={quantity} onChange={(event) => setQuantity(event.target.value === '' ? '' : Number(event.target.value))} data-testid="input-movement-quantity" className="field font-mono-data" placeholder="0" />
+              </label>
+              <label className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{type === 'purchase' ? 'Costo unitario' : 'Precio unitario'} · MXN</span>
+                <input required min="0" step="0.01" type="number" value={unitPrice} onChange={(event) => setUnitPrice(event.target.value === '' ? '' : Number(event.target.value))} data-testid="input-movement-unit-price" className="field font-mono-data" placeholder="0.00" />
+              </label>
+            </div>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{type === 'purchase' ? 'Proveedor' : 'Cliente'} <span className="font-normal normal-case text-muted-foreground">(opcional)</span></span>
+              <input value={counterparty} maxLength={120} onChange={(event) => setCounterparty(event.target.value)} data-testid="input-movement-counterparty" className="field" placeholder={type === 'purchase' ? 'Ej. Distribuidora Centro' : 'Ej. Ana López'} />
+            </label>
+            <label className="block space-y-1.5">
+              <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Nota <span className="font-normal normal-case text-muted-foreground">(opcional)</span></span>
+              <textarea value={note} maxLength={300} onChange={(event) => setNote(event.target.value)} data-testid="input-movement-note" className="field min-h-20 resize-y" placeholder="Factura, pedido o comentario..." />
+            </label>
+            {movementError && <p className="rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive" data-testid="status-movement-error">{movementError}</p>}
+            <div className="flex flex-col-reverse gap-2 border-t border-card-border pt-4 sm:flex-row sm:justify-end">
+              <button type="button" onClick={onClose} data-testid="button-cancel-movement" className="button-secondary">Cerrar</button>
+              <button type="submit" disabled={createMovement.isPending} data-testid="button-save-movement" className="button-primary">
+                {createMovement.isPending ? 'Registrando…' : type === 'purchase' ? 'Registrar entrada' : 'Registrar salida'}
+              </button>
+            </div>
+          </form>
+
+          <section className="min-h-0 bg-secondary/15 px-5 py-5 sm:px-7 lg:overflow-y-auto">
+            <div className="flex items-center justify-between gap-3">
+              <div><p className="font-display text-lg font-bold">Movimientos</p><p className="text-xs text-muted-foreground">Saldo después de cada operación</p></div>
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 font-mono-data text-xs font-bold text-primary">{number.format(product.stock)} pzas.</span>
+            </div>
+            {movementsQuery.isLoading ? <div className="mt-5 space-y-3">{[1, 2, 3].map((item) => <div key={item} className="h-16 animate-pulse rounded-lg bg-secondary" />)}</div> : movementsQuery.isError ? <div className="mt-5 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">No pudimos cargar el historial.</div> : movements.length === 0 ? <div className="mt-5 rounded-xl border border-dashed border-input p-5 text-center text-xs text-muted-foreground">Aún no hay movimientos registrados.</div> : <div className="mt-4 space-y-2">{movements.map((movement) => <MovementItem key={movement.id} movement={movement} />)}</div>}
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MovementItem({ movement }: { movement: InventoryMovement }) {
+  const purchase = movement.type === 'purchase';
+  return (
+    <article className="rounded-xl border border-card-border bg-card p-3 shadow-sm" data-testid={`movement-item-${movement.id}`}>
+      <div className="flex items-start gap-3">
+        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${purchase ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'}`}>{purchase ? <ArrowDownToLine size={15} /> : <ArrowUpFromLine size={15} />}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2"><p className="text-xs font-bold">{purchase ? 'Entrada / compra' : 'Salida / venta'}</p><span className={`font-mono-data text-xs font-bold ${purchase ? 'text-primary' : 'text-accent'}`}>{purchase ? '+' : '-'}{number.format(movement.quantity)}</span></div>
+          <p className="mt-1 truncate text-[10px] text-muted-foreground">{movement.counterparty || 'Sin contraparte'} · {new Intl.DateTimeFormat('es-MX', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(movement.createdAt))}</p>
+          <div className="mt-2 flex items-center justify-between gap-2 border-t border-card-border pt-2 font-mono-data text-[10px] text-muted-foreground"><span>Saldo {number.format(movement.stockAfter)}</span><span>{formatCurrency(movement.total)}</span></div>
+        </div>
+      </div>
+      {movement.note && <p className="mt-2 border-t border-card-border pt-2 text-[10px] leading-4 text-muted-foreground">{movement.note}</p>}
+    </article>
+  );
+}
+
 function ProductRow({
   product,
   onEdit,
   onDelete,
+  onMovement,
 }: {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onMovement: (product: Product) => void;
 }) {
   const low = product.stock <= 5;
   const margin = product.salePrice - product.costPrice;
   return (
-    <div className="group grid grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] items-center gap-3 border-b border-card-border px-4 py-3.5 last:border-0 hover:bg-[hsl(var(--secondary)/.42)] sm:px-5" data-testid={`row-product-${product.id}`}>
+    <div className="group grid grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_124px] items-center gap-3 border-b border-card-border px-4 py-3.5 last:border-0 hover:bg-[hsl(var(--secondary)/.42)] sm:px-5" data-testid={`row-product-${product.id}`}>
       <div className="flex min-w-0 items-center gap-3">
         <ProductAvatar product={product} />
         <div className="min-w-0">
@@ -370,6 +521,7 @@ function ProductRow({
       <span className={`font-mono-data text-right text-sm font-medium ${low ? 'text-accent' : ''}`}>{number.format(product.stock)} {low && <AlertTriangle className="mb-0.5 ml-1 inline-block" size={13} />}</span>
       <span className="font-mono-data text-right text-xs text-primary">{formatCurrency(margin)}</span>
       <div className="flex justify-end gap-1 opacity-70 transition-opacity group-hover:opacity-100">
+        <button type="button" onClick={() => onMovement(product)} data-testid={`button-movement-product-${product.id}`} className="icon-button bg-card/70 text-primary" title="Abrir Kardex" aria-label={`Abrir Kardex de ${product.name}`}><History size={15} /></button>
         <button type="button" onClick={() => onEdit(product)} data-testid={`button-edit-product-${product.id}`} className="icon-button bg-card/70" title="Editar producto" aria-label={`Editar ${product.name}`}><Pencil size={15} /></button>
         <button type="button" onClick={() => onDelete(product)} data-testid={`button-delete-product-${product.id}`} className="icon-button text-destructive hover:bg-[hsl(var(--destructive)/.1)]" title="Eliminar producto" aria-label={`Eliminar ${product.name}`}><Trash2 size={15} /></button>
       </div>
@@ -381,10 +533,12 @@ function ProductMobileCard({
   product,
   onEdit,
   onDelete,
+  onMovement,
 }: {
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
+  onMovement: (product: Product) => void;
 }) {
   const low = product.stock <= 5;
   return (
@@ -399,6 +553,7 @@ function ProductMobileCard({
           </div>
         </div>
         <div className="flex gap-1">
+          <button type="button" onClick={() => onMovement(product)} data-testid={`button-mobile-movement-product-${product.id}`} className="icon-button text-primary" aria-label={`Abrir Kardex de ${product.name}`}><History size={15} /></button>
           <button type="button" onClick={() => onEdit(product)} data-testid={`button-mobile-edit-product-${product.id}`} className="icon-button" aria-label={`Editar ${product.name}`}><Pencil size={15} /></button>
           <button type="button" onClick={() => onDelete(product)} data-testid={`button-mobile-delete-product-${product.id}`} className="icon-button text-destructive" aria-label={`Eliminar ${product.name}`}><Trash2 size={15} /></button>
         </div>
@@ -425,6 +580,7 @@ export default function Catalog() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [movementProduct, setMovementProduct] = useState<Product | null>(null);
   const [lowOnly, setLowOnly] = useState(false);
   const [notice, setNotice] = useState('');
 
@@ -456,6 +612,7 @@ export default function Catalog() {
   const invalidateCatalog = () => {
     queryClient.invalidateQueries({ queryKey: getListProductsQueryKey() });
     queryClient.invalidateQueries({ queryKey: getGetProductSummaryQueryKey() });
+    queryClient.invalidateQueries({ queryKey: getListMovementsQueryKey() });
   };
 
   const openNew = () => {
@@ -468,8 +625,12 @@ export default function Catalog() {
     setDialogOpen(true);
   };
 
+  const openMovement = (product: Product) => {
+    setMovementProduct(product);
+  };
+
   const handleSubmit = (values: FormValues) => {
-    if (values.costPrice === '' || values.salePrice === '' || values.stock === '') return;
+    if (values.costPrice === '' || values.salePrice === '' || (!editing && values.stock === '')) return;
     const payload: ProductInput = {
       ...values,
       costPrice: Number(values.costPrice),
@@ -477,7 +638,9 @@ export default function Catalog() {
       stock: Number(values.stock),
     };
     if (editing) {
-      updateProduct.mutate({ id: editing.id, data: payload }, {
+      const { stock: _stock, ...updatePayload } = payload;
+      const data: ProductUpdate = updatePayload;
+      updateProduct.mutate({ id: editing.id, data }, {
         onSuccess: () => {
           invalidateCatalog();
           setDialogOpen(false);
@@ -600,8 +763,8 @@ export default function Catalog() {
                 </div>
               </div>
               {productsLoading ? <div className="space-y-0" data-testid="product-list-loading">{[1, 2, 3, 4, 5].map((item) => <div key={item} className="flex h-[70px] animate-pulse items-center gap-4 border-b border-card-border px-5"><span className="h-9 w-9 rounded-lg bg-secondary" /><span className="h-3 w-44 rounded bg-secondary" /><span className="ml-auto h-3 w-20 rounded bg-secondary" /></div>)}</div> : visibleProducts.length === 0 ? <div className="flex min-h-[270px] flex-col items-center justify-center px-5 text-center" data-testid="empty-product-list"><div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-muted-foreground"><Package2 size={22} /></div><h4 className="font-display text-lg font-bold">{allProducts.length === 0 ? 'Tu catálogo empieza aquí' : 'No hay coincidencias'}</h4><p className="mt-1 max-w-sm text-xs text-muted-foreground">{allProducts.length === 0 ? 'Agrega el primer producto para empezar a ver tus existencias.' : 'Prueba con otra búsqueda o limpia los filtros activos.'}</p><button type="button" onClick={allProducts.length === 0 ? openNew : () => { setSearch(''); setCategory('Todas'); setLowOnly(false); }} data-testid="button-empty-product-action" className="button-primary mt-5 h-9 px-4 text-xs">{allProducts.length === 0 ? 'Agregar producto' : 'Limpiar filtros'}</button></div> : <>
-                 <div className="hidden overflow-x-auto md:block"><div className="grid min-w-[790px] grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_88px] gap-3 border-y border-card-border bg-secondary/35 px-4 py-2.5 font-mono-data text-[9px] uppercase tracking-[.13em] text-muted-foreground sm:px-5"><span>Producto</span><span>Categoría</span><span className="text-right">Costo</span><span className="text-right">Venta</span><span className="text-right">Stock</span><span className="text-right">Margen</span><span /></div>{visibleProducts.map((product) => <ProductRow key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} />)}</div>
-                <div className="md:hidden">{visibleProducts.map((product) => <ProductMobileCard key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} />)}</div>
+                  <div className="hidden overflow-x-auto md:block"><div className="grid min-w-[826px] grid-cols-[minmax(190px,1.8fr)_110px_105px_105px_110px_82px_124px] gap-3 border-y border-card-border bg-secondary/35 px-4 py-2.5 font-mono-data text-[9px] uppercase tracking-[.13em] text-muted-foreground sm:px-5"><span>Producto</span><span>Categoría</span><span className="text-right">Costo</span><span className="text-right">Venta</span><span className="text-right">Stock</span><span className="text-right">Margen</span><span className="text-right">Acciones</span></div>{visibleProducts.map((product) => <ProductRow key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} onMovement={openMovement} />)}</div>
+                 <div className="md:hidden">{visibleProducts.map((product) => <ProductMobileCard key={product.id} product={product} onEdit={openEdit} onDelete={handleDelete} onMovement={openMovement} />)}</div>
               </>}
               {visibleProducts.length > 0 && <div className="flex items-center justify-between border-t border-card-border bg-secondary/25 px-4 py-3 text-[10px] text-muted-foreground sm:px-5"><span>Margen unitario = precio de venta − costo</span><span className="font-mono-data">{visibleProducts.length} registros</span></div>}
             </section>
@@ -610,6 +773,7 @@ export default function Catalog() {
         </main>
       </div>
       <ProductDialog open={dialogOpen} editing={editing} pending={pending} onClose={() => setDialogOpen(false)} onSubmit={handleSubmit} />
+      <MovementDialog product={movementProduct} open={Boolean(movementProduct)} onClose={() => setMovementProduct(null)} onSaved={invalidateCatalog} />
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
   );

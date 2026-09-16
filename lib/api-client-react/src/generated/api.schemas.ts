@@ -62,10 +62,54 @@ export interface ProductUpdate {
   costPrice?: number;
   /** @minimum 0 */
   salePrice?: number;
-  /** @minimum 0 */
-  stock?: number;
   /** @nullable */
   imageUrl?: string | null;
+}
+
+export type InventoryMovementType = typeof InventoryMovementType[keyof typeof InventoryMovementType];
+
+
+export const InventoryMovementType = {
+  purchase: 'purchase',
+  sale: 'sale',
+} as const;
+
+export interface InventoryMovement {
+  id: number;
+  productId: number;
+  productName: string;
+  productSku: string;
+  type: InventoryMovementType;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  stockAfter: number;
+  /** @nullable */
+  counterparty: string | null;
+  /** @nullable */
+  note: string | null;
+  createdAt: string;
+}
+
+export type InventoryMovementInputType = typeof InventoryMovementInputType[keyof typeof InventoryMovementInputType];
+
+
+export const InventoryMovementInputType = {
+  purchase: 'purchase',
+  sale: 'sale',
+} as const;
+
+export interface InventoryMovementInput {
+  productId: number;
+  type: InventoryMovementInputType;
+  /** @minimum 1 */
+  quantity: number;
+  /** @minimum 0 */
+  unitPrice: number;
+  /** @maxLength 120 */
+  counterparty?: string;
+  /** @maxLength 300 */
+  note?: string;
 }
 
 export interface ProductSummary {
@@ -112,4 +156,17 @@ export type ListProductsParams = {
 search?: string;
 category?: string;
 };
+
+export type ListMovementsParams = {
+productId?: number;
+type?: ListMovementsType;
+};
+
+export type ListMovementsType = typeof ListMovementsType[keyof typeof ListMovementsType];
+
+
+export const ListMovementsType = {
+  purchase: 'purchase',
+  sale: 'sale',
+} as const;
 

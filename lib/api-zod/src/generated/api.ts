@@ -116,8 +116,6 @@ export const updateProductBodyCostPriceMin = 0;
 
 export const updateProductBodySalePriceMin = 0;
 
-export const updateProductBodyStockMin = 0;
-
 
 
 export const UpdateProductBody = zod.object({
@@ -130,7 +128,6 @@ export const UpdateProductBody = zod.object({
 })).optional(),
   "costPrice": zod.number().min(updateProductBodyCostPriceMin).optional(),
   "salePrice": zod.number().min(updateProductBodySalePriceMin).optional(),
-  "stock": zod.number().min(updateProductBodyStockMin).optional(),
   "imageUrl": zod.string().nullish()
 })
 
@@ -176,6 +173,68 @@ export const GetProductSummaryResponse = zod.object({
   "projectedProfit": zod.number(),
   "lowStockCount": zod.number(),
   "categories": zod.number()
+})
+
+
+/**
+ * @summary List inventory movements
+ */
+export const ListMovementsQueryParams = zod.object({
+  "productId": zod.coerce.number().optional(),
+  "type": zod.enum(['purchase', 'sale']).optional()
+})
+
+export const ListMovementsResponseItem = zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productSku": zod.string(),
+  "type": zod.enum(['purchase', 'sale']),
+  "quantity": zod.number(),
+  "unitPrice": zod.number(),
+  "total": zod.number(),
+  "stockAfter": zod.number(),
+  "counterparty": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
+})
+export const ListMovementsResponse = zod.array(ListMovementsResponseItem)
+
+
+/**
+ * @summary Register an inventory movement
+ */
+
+export const createMovementBodyUnitPriceMin = 0;
+
+export const createMovementBodyCounterpartyMax = 120;
+
+export const createMovementBodyNoteMax = 300;
+
+
+
+export const CreateMovementBody = zod.object({
+  "productId": zod.number(),
+  "type": zod.enum(['purchase', 'sale']),
+  "quantity": zod.number().min(1),
+  "unitPrice": zod.number().min(createMovementBodyUnitPriceMin),
+  "counterparty": zod.string().max(createMovementBodyCounterpartyMax).optional(),
+  "note": zod.string().max(createMovementBodyNoteMax).optional()
+})
+
+export const CreateMovementResponse = zod.object({
+  "id": zod.number(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productSku": zod.string(),
+  "type": zod.enum(['purchase', 'sale']),
+  "quantity": zod.number(),
+  "unitPrice": zod.number(),
+  "total": zod.number(),
+  "stockAfter": zod.number(),
+  "counterparty": zod.string().nullable(),
+  "note": zod.string().nullable(),
+  "createdAt": zod.coerce.date()
 })
 
 

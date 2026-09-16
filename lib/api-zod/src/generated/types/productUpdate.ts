@@ -19,8 +19,6 @@ export interface ProductUpdate {
   costPrice?: number;
   /** @minimum 0 */
   salePrice?: number;
-  /** @minimum 0 */
-  stock?: number;
   /** @nullable */
   imageUrl?: string | null;
 }

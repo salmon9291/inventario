@@ -12,6 +12,8 @@ tags:
     description: Health operations
   - name: products
     description: Product catalog operations
+  - name: movements
+    description: Inventory Kardex operations
   - name: assistant
     description: Inventory assistant operations
 paths:
@@ -123,6 +125,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProductSummary"
+  /movements:
+    get:
+      operationId: listMovements
+      tags: [movements]
+      summary: List inventory movements
+      parameters:
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [purchase, sale]
+      responses:
+        "200":
+          description: Inventory movement list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryMovement"
+    post:
+      operationId: createMovement
+      tags: [movements]
+      summary: Register an inventory movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InventoryMovementInput"
+      responses:
+        "201":
+          description: Created inventory movement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryMovement"
+        "400":
+          description: Invalid movement or insufficient stock
+        "404":
+          description: Product not found
   /assistant/chat:
     post:
       operationId: chatWithInventoryAssistant
@@ -247,11 +296,59 @@ components:
         salePrice:
           type: number
           minimum: 0
-        stock:
-          type: number
-          minimum: 0
         imageUrl:
           type: ["string", "null"]
+    InventoryMovement:
+      type: object
+      properties:
+        id:
+          type: number
+        productId:
+          type: number
+        productName:
+          type: string
+        productSku:
+          type: string
+        type:
+          type: string
+          enum: [purchase, sale]
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        total:
+          type: number
+        stockAfter:
+          type: number
+        counterparty:
+          type: ["string", "null"]
+        note:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, productId, productName, productSku, type, quantity, unitPrice, total, stockAfter, counterparty, note, createdAt]
+    InventoryMovementInput:
+      type: object
+      properties:
+        productId:
+          type: number
+        type:
+          type: string
+          enum: [purchase, sale]
+        quantity:
+          type: number
+          minimum: 1
+        unitPrice:
+          type: number
+          minimum: 0
+        counterparty:
+          type: string
+          maxLength: 120
+        note:
+          type: string
+          maxLength: 300
+      required: [productId, type, quantity, unitPrice]
     ProductSummary:
       type: object
       properties:

@@ -23,6 +23,9 @@ import type {
   AssistantChatInput,
   AssistantChatResponse,
   HealthStatus,
+  InventoryMovement,
+  InventoryMovementInput,
+  ListMovementsParams,
   ListProductsParams,
   Product,
   ProductInput,
@@ -509,6 +512,161 @@ export function useGetProductSummary<TData = Awaited<ReturnType<typeof getProduc
 
 
 
+
+export const getListMovementsUrl = (params?: ListMovementsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/movements?${stringifiedParams}` : `/api/movements`
+}
+
+/**
+ * @summary List inventory movements
+ */
+export const listMovements = async (params?: ListMovementsParams, options?: Parameters<typeof customFetch>[1]): Promise<InventoryMovement[]> => {
+
+  return customFetch<InventoryMovement[]>(getListMovementsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListMovementsQueryKey = (params?: ListMovementsParams,) => {
+    return [
+    `/api/movements`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListMovementsQueryOptions = <TData = Awaited<ReturnType<typeof listMovements>>, TError = ErrorType<unknown>>(params?: ListMovementsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMovements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListMovementsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listMovements>>> = ({ signal }) => listMovements(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listMovements>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListMovementsQueryResult = NonNullable<Awaited<ReturnType<typeof listMovements>>>
+export type ListMovementsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List inventory movements
+ */
+
+export function useListMovements<TData = Awaited<ReturnType<typeof listMovements>>, TError = ErrorType<unknown>>(
+ params?: ListMovementsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listMovements>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListMovementsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateMovementUrl = () => {
+
+
+
+
+  return `/api/movements`
+}
+
+/**
+ * @summary Register an inventory movement
+ */
+export const createMovement = async (inventoryMovementInput: InventoryMovementInput, options?: Parameters<typeof customFetch>[1]): Promise<InventoryMovement> => {
+
+  return customFetch<InventoryMovement>(getCreateMovementUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(inventoryMovementInput)
+  }
+);}
+
+
+
+
+
+export const getCreateMovementMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMovement>>, TError,{data: BodyType<InventoryMovementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createMovement>>, TError,{data: BodyType<InventoryMovementInput>}, TContext> => {
+
+const mutationKey = ['createMovement'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createMovement>>, {data: BodyType<InventoryMovementInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createMovement(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateMovementMutationResult = NonNullable<Awaited<ReturnType<typeof createMovement>>>
+    export type CreateMovementMutationBody = BodyType<InventoryMovementInput>
+    export type CreateMovementMutationError = ErrorType<void>
+
+    /**
+ * @summary Register an inventory movement
+ */
+export const useCreateMovement = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createMovement>>, TError,{data: BodyType<InventoryMovementInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createMovement>>,
+        TError,
+        {data: BodyType<InventoryMovementInput>},
+        TContext
+      > => {
+      return useMutation(getCreateMovementMutationOptions(options));
+    }
 
 export const getChatWithInventoryAssistantUrl = () => {
 
